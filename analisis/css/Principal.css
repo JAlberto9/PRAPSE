@@ -1,0 +1,424 @@
+
+﻿html {
+    height:100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body{
+    height:100%;
+    width:100%;
+    margin: 0;
+    padding: 0;
+}
+
+.bordeCont{
+    padding :0;
+    height: 100%;    
+    width:100%; 
+}
+
+.imagenBanner{
+    position:absolute;
+    height:70px;
+    width:100%;
+    /*margin:-5px;*/
+    margin-left:-8px;
+    margin-top:-8px;
+    margin-bottom:1px;
+    margin-right:-5px;
+ 
+}
+
+.StyleBanner{
+    overflow:hidden;
+    margin-bottom:1px;
+    margin-left:-4px;
+    margin-top:-4px;
+    margin-right:-4px;
+    height:50px;
+    padding:0;
+}
+    
+.styleVentaContenido{
+    position:absolute;
+    width: 210px;
+    /*height: 100px;*/
+    margin-left:0px;
+    margin-bottom:0px;
+    margin-top:-1px;
+    /*visibility:visible;*/ 
+   /* overflow:scroll;*/
+  
+  
+}
+   
+.mapaConte{
+    margin-bottom:-2px;
+    margin-left:-8px;/*tenía -4*/
+    margin-top:-8px;/*tenía -5*/
+    margin-right:-4px;
+    padding:0;
+    overflow:hidden;
+   }
+
+ 
+#map{
+    position: absolute;
+    height:100%;
+    width:100%;
+    /*margin-left:-4px;
+    /*margin-top:-4px;*/
+    /*margin-bottom:-5px;
+    margin-right:-2px;
+    /*padding:0;*/   
+    
+}
+
+.ContenedorMapaScroll{
+    overflow-x:scroll;
+    overflow-y: scroll;
+}
+      
+#iconoCerrar{
+    width: 15px;
+    height: 15px;
+    margin-left: 190px;
+    float:right;
+    cursor:pointer;
+   
+}
+    
+.legendPane {
+    width: auto;
+    height:auto;
+}
+
+#ContenidoCapasCss {
+    background-color: rgb(0, 123, 222);
+    height:auto;
+    width:auto;
+    border-bottom: 3px solid white;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius:5px;
+    border-bottom-right-radius:5px;
+    border-top-right-radius:5px;
+    color: white;
+    padding:2px;
+}
+
+#ContenidoCapasPadreCss {
+    background-color: rgb(0, 123, 222);
+    height:auto;
+    width:auto;
+    border-bottom: 3px solid white;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius:5px;
+    border-bottom-right-radius:5px;
+    border-top-right-radius:5px;
+    color: white;
+    padding:2px;
+    margin-left: 13px;
+}
+
+.iconoEliminarCapas {
+    float:right;
+    margin-top:3px;
+    margin-right:10px;
+}
+
+.iconoExpandir {
+
+    margin-top:4px;
+    margin-left:4px;
+}
+
+.MenuConte{
+   position: absolute;
+   height:18%; 
+   /*min-height:100%;*/
+   /*max-height:25%;*/
+   width:99%;
+   /*min-width:1015px;*/
+   overflow: hidden;
+   background-color: transparent;
+   z-index:853; 
+   margin-left:-8px;
+   margin-top: -6px;
+}
+
+.ContenedorMenuCss
+{
+   position: absolute;
+}
+
+.cssVtnaSimbologia
+{
+    margin-top:-8px;
+    margin-left:-8px;
+    
+}
+
+
+
+@media only screen and (max-width : 600px) and (orientation : portrait){
+ 
+#map{
+    
+    height:170%;
+    width:207.5%;
+    
+    
+}
+.MenuConte{
+
+   width:202.2%;
+ 
+ }
+ 
+.ContenedorMapaScroll{
+    overflow-x:scroll;
+    overflow-y: scroll;
+}
+}
+
+@media only screen and (max-width : 768px) {
+  
+#map{
+    height:100%;
+    width:132%;   
+}
+.MenuConte{
+
+   height:12%; 
+   width:130.5%;
+ }
+ 
+.ContenedorMapaScroll{
+    overflow-x:scroll;
+    overflow-y: scroll;
+}
+}
+
+@media only screen and (max-width : 480px) and (orientation : portrait) {
+
+#map {
+        height: 120%;
+        width: 181%;
+        /*background-color: red;*/
+}
+
+.MenuConte {
+        height: 13%;
+        width: 179%;
+        /*background-color:beige;*/
+}
+}
+
+@media only screen and (max-width : 800px) and (orientation : landscape) {
+
+#map {
+        height: 120%;
+        width: 108%;
+        /*background-color: #b6ff00;*/
+}
+
+.MenuConte {
+        height: 23%;
+        width: 106.2%;
+        /*background-color:#000;*/
+}
+}
+
+@media only screen and (max-width : 360px) and (orientation : portrait) {
+
+#map {
+        height: 120%;
+        width: 229%;
+        /*background-color: #570863;*/
+}
+
+.MenuConte {
+        height: 17%;
+        width: 225.1%;
+        /*background-color:#1ba3b6;*/
+}
+}
+
+@media only screen and (max-width : 640px) and (orientation : landscape){
+ 
+#map{
+    
+    height:170%;
+    width:140%;
+    /*background-color:gold;*/
+    
+}
+.MenuConte{
+
+   width:138%;
+   height: 32%;
+   /*background-color: yellowgreen;*/
+ 
+ }
+ 
+.ContenedorMapaScroll{
+    overflow-x:scroll;
+    overflow-y: scroll;
+}
+}
+
+@media only screen and (max-width : 320px) and (orientation : portrait) {
+
+#map {
+    height: 120%;
+    width: 257%;
+    /*background-color: #ffe200;*/
+}
+
+.MenuConte {
+     height: 24%;
+     width: 253%;
+     /*background-color:#641dd9;*/
+}
+}
+
+@media only screen and (max-width : 480px) and (orientation : landscape) {
+
+#map {
+    height: 200%;
+    width: 180%;
+    /*background-color: #00ff9a;*/
+}
+
+.MenuConte {
+     height: 40%;
+     width: 177%;
+     /*background-color:#796c8f;*/
+}
+}
+
+@media only screen and (max-width : 400px) and (orientation : landscape) {
+
+#map {
+    height: 300%;
+    width: 233%;
+    /*background-color: #00b9ff;*/
+}
+
+.MenuConte {
+     height: 55%;
+     width: 229.3%;
+     /*background-color:#ee20dd;*/
+}
+}
+
+@media only screen and (max-width : 400px) and (orientation : landscape) {
+
+#map {
+    height: 300%;
+    width: 233%;
+    /*background-color: #00b9ff;*/
+}
+
+.MenuConte {
+     height: 55%;
+     width: 229.3%;
+     /*background-color:#ee20dd;*/
+}
+}
+
+@media only screen and (max-width : 240px) and (orientation : portrait) {
+
+#map {
+    height: 170%;
+    width: 350%;
+    /*background-color: #897ca7;*/
+}
+
+.MenuConte {
+     height: 28%;
+     width: 345%;
+     /*background-color:#ee206c;*/
+}
+}
+
+@media only screen and (max-width : 320px) and (orientation : landscape) {
+
+  #map {
+      height: 300%;
+      width: 270%;
+      /*background-color: #f1c4ed;*/
+  }
+
+  .MenuConte {
+       height: 55%;
+       width: 266%;
+       /*background-color:#f2abbc;*/
+  }
+}
+
+
+
+#divResultA{
+    width:100%;
+    height:auto;
+/*    left:20%;*/
+    top:25px;
+    font-size: 25px;
+    font-weight: bold;
+    text-align: center;
+    margin: auto;
+    z-index: 999;
+    position:absolute;
+    border-color:#000000;
+    color:rgb(142, 30, 30);
+}
+
+
+#divResultA img{
+    width:auto;
+}
+
+
+/*----------------------------------------------------------------------------------------------*/
+
+div.k-window{
+/*    transparencia fondo ventana resultados*/
+    background-color: rgba(227, 229, 227, 0.5);
+}
+
+/*Fondo de la ventana emergente de Resutlados*/
+.VentanaResultcss{
+/*    transparencia fondo ventna resultados*/
+    background-color: rgba(227, 229, 227,0);
+}
+
+/*Ventana de análisis-------------------------*/
+
+.Contenidoanalisiscss{ /*eSTE ES EL DIV DEL CONTENIDO DE LA VENTANA EMERGENTE DE RESULTADOS*/
+/*    div de las imagenes del contenido de analisis*/
+    background-color: rgba(227, 229, 227,0);
+
+}
+
+.Ventanaanalisiscss{
+    background-color:white;  
+    visibility:visible; 
+    position:absolute; 
+    /*right:10px; 
+    top:100px;*/ 
+    z-Index:999;
+}
+/*------------------------------------------*/
+
+
+.k-window-title {
+
+    color: black; 
+    font-family: Arial, Helvetica, sans-serif; 
+    font-size: 14px; 
+    text-align:center;
+
+}
