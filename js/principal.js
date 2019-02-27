@@ -100,7 +100,7 @@
         "dijit/registry",
 
         "esri/tasks/DistanceParameters",
-        "esri/tasks/BufferParameters",        
+        "esri/tasks/BufferParameters",
         "esri/geometry/Point",
         "esri/symbols/Font",
         "esri/symbols/TextSymbol",
@@ -519,7 +519,14 @@
               createRandomText();
               lastGeometry = evt.geometry;
               realizarAnalisis(evt.geometry, exceptLayers);
+
+
+
           }
+          //funcion estadosafectados(){
+            //
+
+          //}
 
           function calcularAreaPerimetro(geometry){
             var areasAndLengthParams = new AreasAndLengthsParameters();
@@ -595,7 +602,7 @@
 
       });
   }
-  
+
 function getCleanedString(cadena){
    // Definimos los caracteres que queremos eliminar
    var specialChars = "!@#$^&%*()+=-[]\/{}|:<>?,.";
@@ -603,7 +610,7 @@ function getCleanedString(cadena){
    // Los eliminamos todos
    for (var i = 0; i < specialChars.length; i++) {
        cadena= cadena.replace(new RegExp("\\" + specialChars[i], 'gi'), '');
-   }   
+   }
 
    // Lo queremos devolver limpio en minusculas
    cadena = cadena.toLowerCase();
@@ -641,7 +648,7 @@ document.addEventListener('analisis-completo', function(result){//es el auditor 
   $("#Puertos .resultNumber").text(agregasComas(result.detail["Puertos"]));
   $("#Abasto .resultNumber").text(agregasComas(result.detail["Abasto"]));
   $("#Municipio .resultNumber").text(agregasComas(result.detail["Municipio"]));
-  
+
   //
   $("#pob_m_t").text(agregasComas(result.detail["TotalPobMas"]));
   $("#pob_f_t").text(agregasComas(result.detail["TotalPobFem"]));
@@ -652,12 +659,13 @@ document.addEventListener('analisis-completo', function(result){//es el auditor 
   $("#pob_m_mayor_60").text(agregasComas(result.detail["TotalMayor60M"]));
   $("#pob_f_mayor_60").text(agregasComas(result.detail["TotalMayor60F"]));
 
+
   /*Abrir el panel al hacer un análisis*/
   if($(".ui-panel").hasClass("ui-panel-closed"))
     $("#ui-settings-button")[0].click();
   if($("#analisis-container div")[0].attributes[1].value == "true")
         $("#analisis-container h4")[0].click();
-  
+
   generaTablaPo(pobTotalXEstado);
   hideElem();
 });
@@ -667,6 +675,28 @@ function showElem() {
 }
 function hideElem() {
     document.getElementById("Img1").style.visibility = "hidden";
+}
+function myFunction() {
+
+  var estadosafectados, text, fLen, i;
+  estadosafectados = estados;
+  fLen = estadosafectados.length;
+  text = "<ul>";
+  for (i = 0; i < fLen; i++) {
+    text += "<li>" + estadosafectados[i] + "</a></li>";
+    }
+    text += "</ul>";
+    document.getElementById("demo").innerHTML = text;
+
+
+
+//  var estadosafectados = estados;
+  //estadosafectados.toString();
+//  for (var i = 0; i < estadosafectados.length - 1; i+=1) {
+    //document.write(estadosafectados[i]+"<br>");
+    //console.log(estadosafectados[i]);
+  //  }
+  //document.getElementById("demo").innerHTML = estadosafectados ;
 }
 
 function agregasComas(nStr) {
@@ -718,7 +748,7 @@ function limpiarGeometria() {
 (function () {
   $.ajax({
     url:'http://infosiap.siap.gob.mx:8080/agricola_siap_gobmx/ResumenDelegacion.do?anio=2017&nivel=3&delegacion=20&mes=12&moda=3&ciclo=3&&consultar=si',
-      type: "GET", 
+      type: "GET",
       success: function (data){
         console.log(data);
       },
@@ -748,7 +778,7 @@ var municipio=-1;
 var mes = 5; //fecha.getMonth()+1;
 var moda=3;
 var ciclo=4;
-var tipoprograma=0; 
+var tipoprograma=0;
 var consultar='si';
 console.log(anio);
 
@@ -761,7 +791,7 @@ $(function () {
     dataType: "html",
     success: function(isiap){
         console.log(isiap);
-    // aquí ya tienes los datos 
+    // aquí ya tienes los datos
         },
     error: function(err){
 
@@ -780,7 +810,7 @@ $(function () {
     dataType: "html",
     success: function(ismn){
         console.log(ismn);
-    // aquí ya tienes los datos 
+    // aquí ya tienes los datos
         },
     error: function(err){
 
@@ -792,18 +822,18 @@ $(function () {
 
 function zoomLayer(url){
     require([
-      "esri/layers/FeatureLayer", 
-      "esri/geometry/Extent", 
-      "esri/SpatialReference", 
+      "esri/layers/FeatureLayer",
+      "esri/geometry/Extent",
+      "esri/SpatialReference",
       "esri/tasks/ProjectParameters"
     ], function(
-      FeatureLayer, 
-      Extent, 
-      SpatialReference, 
+      FeatureLayer,
+      Extent,
+      SpatialReference,
       ProjectParameters
     ){
       console.log(url);
-      $.ajax({//REvisar el los datos 
+      $.ajax({//REvisar el los datos
         url: url,
             type: "GET",
             data: {f: "json"},
@@ -902,9 +932,9 @@ document.addEventListener('capa-agregada', function(capaObj){
     "esri/symbols/PictureMarkerSymbol",
     "dojo/_base/Color"
     ], function(
-      esriRequest, 
-      FeatureLayer, 
-      lang, 
+      esriRequest,
+      FeatureLayer,
+      lang,
       ClusterFeatureLayer,
       ImageParameters,
       ClassBreaksRenderer,
@@ -960,23 +990,23 @@ document.addEventListener('capa-agregada', function(capaObj){
               layerAdd.remove();
             });
           });
-          
+
           hideElem();
         } else {
-          if(capa["nombre"] == "Directorio Estadístico Nacional de Unidades Económicas  (INEGI, 2016)" 
+          if(capa["nombre"] == "Directorio Estadístico Nacional de Unidades Económicas  (INEGI, 2016)"
             || capa["url"] == "http://servicios1.cenapred.unam.mx:6080/arcgis/rest/services/ANR/Anri/MapServer"
-            || capa["nombre"] == "Unidades de Producción Ganadera (SAGARPA, 2015)" 
+            || capa["nombre"] == "Unidades de Producción Ganadera (SAGARPA, 2015)"
           ){ // DENUE
           // if(1 == 1){
             var imageParameters = new ImageParameters();
             imageParameters.layerIds = [capa["id"]];
             imageParameters.layerOption = ImageParameters.LAYER_OPTION_SHOW;
-  
+
             var layer = new esri.layers.ArcGISDynamicMapServiceLayer(serviciosEncendidos[capa["serviceId"]]["url"], {
               id: capa["serviceId"] + "_layer" + capa["id"],
               imageParameters: imageParameters
             });
-  
+
             var layerLoad = layer.on("load", function(){
               layerLoad.remove();
               map.addLayer(layer);
@@ -1024,13 +1054,13 @@ document.addEventListener('capa-agregada', function(capaObj){
                 var imageParameters = new ImageParameters();
                 imageParameters.layerIds = [capa["id"]];
                 imageParameters.layerOption = ImageParameters.LAYER_OPTION_SHOW;
-      
+
                 var layer = new esri.layers.ArcGISDynamicMapServiceLayer(serviciosEncendidos[capa["serviceId"]]["url"], {
                   id: capa["serviceId"] + "_layer" + capa["id"],
                   // infoTemplates: new esri.InfoTemplate(),
                   imageParameters: imageParameters
                 });
-      
+
                 var layerLoad = layer.on("load", function(){
                   layerLoad.remove();
                   map.addLayer(layer);
@@ -1048,7 +1078,7 @@ document.addEventListener('capa-agregada', function(capaObj){
                 response.fields.forEach(function(field){
                   if(field.type == "esriFieldTypeOID") outFields.push(field.name);
                 });
-    
+
                 if(response.drawingInfo.renderer.type !== "simple"){
                   if(response.drawingInfo.renderer.field != null){
                     outFields.push(response.drawingInfo.renderer.field);
@@ -1063,7 +1093,7 @@ document.addEventListener('capa-agregada', function(capaObj){
                     outFields.push(response.drawingInfo.renderer.field3);
                   }
                 }
-  
+
                 createCluster(url, capa["serviceId"], capa["id"], outFields, distance);
               }
             });
@@ -1226,7 +1256,7 @@ document.addEventListener('capa-borrada', function(capaObj){
   if(serviciosEncendidos[capa["serviceId"]]["clusterLayers"].includes(capa["id"])){
     serviciosEncendidos[capa["serviceId"]]["clusterLayers"].splice(serviciosEncendidos[capa["serviceId"]]["clusterLayers"].indexOf(capa.id), 1);
   }
-  
+
   map.removeLayer(map.getLayer(capa["serviceId"] + "_layer" + capa["id"]));
   $("span[data-layerUrl='" + capa["url"] + "/" + capa["id"] + "'].action").css("display", "none");
 
@@ -1237,21 +1267,21 @@ document.addEventListener('capa-borrada', function(capaObj){
 
 function getFeaturesFromLayer(url, lastObjectId, objectIdsArray, previousResults){
   require([
-    "esri/layers/FeatureLayer", 
-    "esri/geometry/Extent", 
+    "esri/layers/FeatureLayer",
+    "esri/geometry/Extent",
     "esri/SpatialReference"
     ], function(
-      FeatureLayer, 
-      Extent, 
-      SpatialReference, 
-      SimpleFillSymbol, 
-      SimpleLineSymbol, 
-      Graphic, 
+      FeatureLayer,
+      Extent,
+      SpatialReference,
+      SimpleFillSymbol,
+      SimpleLineSymbol,
+      Graphic,
       Color
       ){
         if(!lastObjectId){
           var queryTask = new esri.tasks.QueryTask(url);
-          var query = new esri.tasks.Query();  
+          var query = new esri.tasks.Query();
           query.where = "1=1";
           query.outSpatialReference = map.spatialReference;
 
@@ -1277,7 +1307,7 @@ function getFeaturesFromLayer(url, lastObjectId, objectIdsArray, previousResults
           })
         } else {
           var queryTask = new esri.tasks.QueryTask(url);
-          var query = new esri.tasks.Query();  
+          var query = new esri.tasks.Query();
           query.where = "1=1";
           query.outSpatialReference = map.spatialReference;
           var objectIds = objectIdsArray.splice(0, 1000);
@@ -1326,7 +1356,7 @@ function unionGeometries(geometriesArray, previousGeometry){
       var graphic = new Graphic(geometry, polySym);
       map.graphics.add(graphic);
     });
-      
+
       unionGeometries(geometriesArray, geometry);
     })
   } else {
@@ -1396,8 +1426,8 @@ $(function(){
       document.addEventListener("cluster-clicked", handler);
       document.addEventListener("cluster-finished", function(){
         document.removeEventListener("cluster-clicked", handler);
-      }); 
-    }  
+      });
+    }
   });
 })
 
@@ -1438,7 +1468,7 @@ function identify(geometry){
     identifiedServices.push(keys[0] + "_" + serviciosEncendidos[keys[0]]["capas"][0]);
 
     mostrarFeaturesDentro(currentLocation, serviciosEncendidos[keys[0]]["url"] + "/" + serviciosEncendidos[keys[0]]["capas"][0], keys[0] + "_" + serviciosEncendidos[keys[0]]["capas"][0], true);
-    
+
     $("#toolbar span").removeClass("active");
     if(locationEventClick) locationEventClick.remove();
   } else {
@@ -1455,7 +1485,7 @@ function identify(geometry){
     var outputHTML = template({servicios: capasMostrar});
     $('#layersActive').html(outputHTML);
     $("#layersActive").css("display", "flex");
-    $("#layersActive .aceptar").on("click", function(){ 
+    $("#layersActive .aceptar").on("click", function(){
       var layers = $("#layersActive input:checked");
       if(layers.length > 0){
         var capasDeBusqueda = {};
@@ -1485,9 +1515,9 @@ function identify(geometry){
             var activeFeature = $(".tabs__item.active").attr("data-feature");
             createFeatureTableCSV(activeFeature);
         });
-        
+
         sistemaExpuestoActivo = $(".tabs__item.active").text();
-    
+
         $(".tabs__item").on("click", function(){
           var tab = $(".tabs__item").index(this);
           $(".tabs__item").removeClass("active");
@@ -1501,7 +1531,7 @@ function identify(geometry){
           if(map.getLayer($(this).attr("data-feature"))) map.getLayer($(this).attr("data-feature")).setVisibility(true);
           sistemaExpuestoActivo = $(this).text();
         });
-        
+
         Object.keys(capasDeBusqueda).forEach(function(key){
           serviciosEncendidos[key]["identify"]["params"].layerIds = capasDeBusqueda[key];
           capasDeBusqueda[key].forEach(function(layer, idx){

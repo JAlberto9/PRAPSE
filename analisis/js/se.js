@@ -44,7 +44,7 @@ var maxFeaturesReturned = 20000;
 */
 // "http://rmgir-servicios.cenapred.unam.mx:6080/arcgis/rest/services/Aplicativos/Analisis/MapServer"
 // "http://servicios2.cenapred.unam.mx:6080/arcgis/rest/services/Analisis/Analisis/MapServer"
-//Aqui se agregan las capas para solo realizar el conteo o si necesita mas como hacer el analisis 
+//Aqui se agregan las capas para solo realizar el conteo o si necesita mas como hacer el analisis
 
 var tiposAnalisisEspecial = {
     "Poblacion": ["PoblacionAgeb", "PoblacionRural", "PoblacionITER"]
@@ -197,7 +197,7 @@ var queryParams = {
     },
     "Municipio": {
       "outFields": [],
-        "where": ""    
+        "where": ""
 
     }
 
@@ -255,7 +255,7 @@ function obtenerURLServicios(serviciosObj, geo, exceptLayers){
               }
             } else {
                 console.log("No se encontró: (servicio)" + parentLayerInfo.name + ", (proporcionado)" + matchLayerInfo["parent"])
-            } 
+            }
           }
 
           layersNamesCopy[serviceInfoIdx].splice(indexOfLayer, 1);
@@ -263,7 +263,7 @@ function obtenerURLServicios(serviciosObj, geo, exceptLayers){
         }
       });
     });
-    
+
     var evt = new CustomEvent('urls-listas', {detail: {geometry: geo, exceptLayers: exceptLayers}});
     document.dispatchEvent(evt);
   }, function(reason){
@@ -289,10 +289,10 @@ function realizarAnalisis(geo, exceptLayers = []){
     TotalMayor60 = 0;
     TotalMayor60F = 0;
     TotalMayor60M = 0;
-    
+
 
     resultadosAnalisis = 0;
-   
+
 
     if(Object.keys(urls) == 0) obtenerURLServicios(nombresCapas, geo, exceptLayers);
     else {
@@ -311,7 +311,13 @@ function realizarAnalisis(geo, exceptLayers = []){
         var evt = new CustomEvent('urls-listas', {detail: {geometry: geo, exceptLayers: exceptLayers}});
         document.dispatchEvent(evt);
     }
+    console.log(estados);
+
+
+
 }
+
+
 
 document.addEventListener('urls-listas', function(response){
     var geo = response.detail.geometry;
@@ -334,12 +340,12 @@ document.addEventListener('urls-listas', function(response){
         }else{
             queryPromises.push(queryTask.executeForCount(query));//Solo cuenta el resto de los valores cuando no tiene otra funcion que hacer como el dela poblacion
         }
-        
+
     })
 
-    Promise.all(queryPromises).then(function(result){  
+    Promise.all(queryPromises).then(function(result){
         Object.keys(queryParams).forEach(function(key, idx){
-            if(tiposAnalisisEspecial["Poblacion"] && tiposAnalisisEspecial["Poblacion"].includes(key)){       
+            if(tiposAnalisisEspecial["Poblacion"] && tiposAnalisisEspecial["Poblacion"].includes(key)){
                 var tipo;
                 if(key == "PoblacionAgeb") tipo = "ageb";
                 else if(key == "PoblacionRural") tipo = "rural";
@@ -352,7 +358,7 @@ document.addEventListener('urls-listas', function(response){
         if(resultadosAnalisis === Object.keys(tiposAnalisisEspecial).length){
             var evt = new CustomEvent('analisis-completo', { 'detail': resultados });//manda una bandera de termino con el nombre 'analisis-completo'
             document.dispatchEvent(evt);
-        }       
+        }
     }, function(error){
         console.log(err);
     })
@@ -378,6 +384,7 @@ document.addEventListener('poblacion-obtenida', function(){
         document.dispatchEvent(evt);
     }
 })
+
 
 function removeLayers(layerNames){
     var index;
@@ -463,7 +470,7 @@ function processResultPob(type, url, outFields, idsArray, suma, pobResult = []){
                 pobTotal.push(pobResult);
 
                 console.log(type, suma);
-                
+
                 Object.keys(pobResult).forEach(function(d){
                     ajustaDatosObjPob(pobResult[d]);
                 });
@@ -550,7 +557,7 @@ function sumaPoblacion(){
                     "Mas60F": pobTotalAjustada["iter"][edo].Mas60F
                 }
             }
-            
+
             pobTotalXEstado.push(obj);
         });
 
@@ -629,6 +636,8 @@ function ajustaDatosObjPob(obj){
 
     return obj;
 }
+
+
 /*
 **********************************************************
 	Fin funciones de Obtener resultados outStatistics

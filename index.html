@@ -28,6 +28,7 @@
   <script type="text/javascript" src="js/principal.js"></script>
   <script type="text/javascript" src="js/capas.js"></script>
   <script type="text/javascript" src="agsjs/dijit/TOC.js"></script>
+
   <!--Para análisis-->
   <!-- <script type="text/javascript" src="http://www.anr.gob.mx/analisis/analisis.js"></script>   -->
   <!-- Modificar el archivo de abajo para obtener el analisis q esta haciendo desde mis computadora -->
@@ -85,12 +86,12 @@
           <li id="cerrar" data-icon="delete"><a href="#" data-rel="close"></a></li>
         </ul>
         <!--NOA-->
-        <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false" id="centro-descarga"> 
+        <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false" id="centro-descarga">
           <h4>NOA</h4>
           <a id="clickbind"  class="ui-btn ui-bnt-b" href="https://www.nhc.noaa.gov/gis/" target=”_blank” >Obtener cono de NOA</a>
         </div><!--Fin de NOA-->
         <!--Carga de KML-->
-        <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false" id="kml-container"> 
+        <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false" id="kml-container">
           <h4>Cargar Información</h4>
           <div class="kml">
             <div class="upload">
@@ -104,7 +105,7 @@
               <ul id="filesList"></ul>
             </div>
           </div>
-        </div> 
+        </div>
         <!-- Panel de análisis -->
         <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false" id="analisis-container">
           <h4 id="analisisBtn">Análisis</h4>
@@ -229,7 +230,7 @@
           </ul>
         </div><!--Fin Panel Análisis-->
          <!--Descarga de datos-->
-        <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false" id="centro-descarga"> 
+        <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false" id="centro-descarga">
           <h4>Descarga</h4>
           <!--  Queda desabilitado hasta nuevo funcionamiento por parte del SMN para generar el codigo necesario
             para que funcione el informe de ese sector-->
@@ -239,13 +240,9 @@
           <!--<button type="button" id="analisis2" onclick="window.location.href = 'reportes/reporte2.php'" target=”_blank” class="btn btn-dark">Resultado de Analisis</button>-->
 
         </div><!--Fin de descarga-->
-        <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false">
-          <h4 id="nacionalBtn">Cultivos</h4>
-          <ul data-role="listview" >
-              <!--<li data-role="list-divider">Capas<a href="#pageone" data-rel="close" class=" ui-icon-delete ui-btn-icon-right"></a></li>--><!--Boton para cerrar panel-->
-              <!--<li data-icon="false"><a onclick="agregarMenuCapa(id)" id="indicadores" >Indicadores</a></li>
-              -->
-          </ul>
+        <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false" id="reporte_siap" >
+          <h4>Cultivos</h4>
+          <a id="analisis2" class="ui-btn ui-bnt-b" href="reportes/siap2.php" target="_blank">Reporte de Cultivos</a>
         </div>
         <div id="tocDiv"></div>
       </div>
@@ -326,9 +323,9 @@
     ga('send', 'pageview');
   </script>
 
-<!--Este escrpt recolecta el valor de cada variable del analisis para convertirlas en vatriables y mandar los datos a los arhcivos de reportes-->  
+<!--Este escrpt recolecta el valor de cada variable del analisis para convertirlas en vatriables y mandar los datos a los arhcivos de reportes-->
   <script>
-  
+
   //Metodo $.Post
     $(function(){
       $('#analisis2').click(function(){
@@ -345,6 +342,7 @@
           Diconsa: document.getElementById("Dic").innerHTML,
           Centrales: document.getElementById("Cam").innerHTML,
           metodo: "POST"
+
         },function(data,status){
             console.log(data+" "+status);
         });
@@ -353,7 +351,7 @@
 
     });
 
-  
+
   /*
   $(function(){
     $('#analisis2').click(function(){
