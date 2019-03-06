@@ -36,7 +36,7 @@ function verificaControles() {
 
 
 function ayuda() {
-    //var win; //= window.open();
+    //var win; //= window.open();            
     var win = window.open("", "ayuda", "height=200,width=500");
     win.document.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"   "http://www.w3.org/TR/html4/loose.dtd">');
     win.document.write('<HTML><HEAD>');
@@ -72,3 +72,4 @@ function ayuda() {
     win.document.write('</BODY></HTML>');
     win.document.close();
 }
+

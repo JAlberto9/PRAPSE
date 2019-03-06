@@ -10,12 +10,12 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <!-- Custom styles for this template -->
    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-   
-   
 
 
-    
-</head>    
+
+
+
+</head>
 
 <body>
     <div class="container">
@@ -59,10 +59,10 @@
             <div class="col-sm-3" style="background-color:lavenderblush; text-align: center">Desconocida</div>
         </div>
         <tr><p></p></tr>
-        
+
         <div class="panel center-block" style="background-image:none;background: #000033; color: white;">
           <div class="panel-heading text-center ">Pronostico</div>
-        </div>               
+        </div>
         <tr><p></p></tr>
     <div class="panel" style="background-image:none;background: #000033; color: white;">
       <div class="panel-heading text-right">SNIIM/CENAPRED</div>

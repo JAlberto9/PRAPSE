@@ -177,16 +177,9 @@
             <li>
               <button class="ui-btn ui-btn-b clickable2" data-sources="Aeropuertos">Aeropu-<br>ertos</button>
             </li>
-            <li>
-                <div class="clickablePuerto" id='Puertos' data-sources="Puertos">
-                <span class="icon-Presa"></span>
-                <div class="description">Puertos</div>
-                <div id="Pue"class="resultNumber">0</div>
-                </div>
-            </li>
-            <li><!--clickable11  Es el codigo que se instuce en la class de button -->
-              <button class="ui-btn ui-btn-b">Puertos</button>
-            </li>
+
+            <!--clickable11  Es el codigo que se instuce en la class de button -->
+
             <li>
                 <div class="clickableBanco" id='Bancos' data-sources="Bancos">
                 <span class="icon-Bank"></span>
@@ -227,6 +220,16 @@
             <li>
               <button class="ui-btn ui-btn-b clickable8" data-sources="Abasto">Centrales<br>de<br>Abasto</button>
             </li>
+            <li>
+                <div class="clickablePuerto" id='Puertos' data-sources="Puertos">
+                <span class="icon-Presa"></span>
+                <div class="description">Puertos</div>
+                <div id="Pue"class="resultNumber">0</div>
+                </div>
+            </li>
+            <li><!--clickable11  Es el codigo que se instuce en la class de button -->
+
+            <li>
           </ul>
         </div><!--Fin Panel Análisis-->
          <!--Descarga de datos-->
@@ -242,7 +245,7 @@
         </div><!--Fin de descarga-->
         <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false" id="reporte_siap" >
           <h4>Cultivos</h4>
-          <a id="analisis2" class="ui-btn ui-bnt-b" href="reportes/siap2.php" target="_blank">Reporte de Cultivos</a>
+          <a id="analisis2" class="ui-btn ui-bnt-b" href="reportes/siap2.html" target="_blank">Reporte de Cultivos</a>
         </div>
         <div id="tocDiv"></div>
       </div>
@@ -329,7 +332,7 @@
   //Metodo $.Post
     $(function(){
       $('#analisis2').click(function(){
-        $.post('sesions.php',{
+        $.post('reportes/esions.php',{
           Poblacion: document.getElementById("Pob").innerHTML,
           Municipio: document.getElementById("Mun").innerHTML,
           Hoteles: document.getElementById("Hot").innerHTML,

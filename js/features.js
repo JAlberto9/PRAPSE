@@ -16,8 +16,8 @@ $(function()
         "Puertos": "http://rmgir.proyectomesoamerica.org/server/rest/services/Aplicativos/Capas_RMGIR/MapServer/58",
         "Abasto":"http://rmgir.proyectomesoamerica.org/server/rest/services/Hosted/Copia_de_Directorio_Centrales_de_Abasto_Mayoristas/FeatureServer/0",
         "Municipio":"http://rmgir.proyectomesoamerica.org/server/rest/services/Aplicativos/Capas_RMGIR/MapServer/114",
-        
-        //Se toma el nombre del identificador para que cuando le des click aparescan en el mapa los iconoes para poder visualizarlos 
+
+        //Se toma el nombre del identificador para que cuando le des click aparescan en el mapa los iconoes para poder visualizarlos
         //como a aparee la de hoteles y aeropuertos solo se a agregado la parte de diconsa.
     }
 
@@ -37,7 +37,7 @@ $(function()
 
 //Inicio Codigo para Puertos
 
-    $(".clickablePuerto").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+    $(".clickablePuerto").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickablePuerto").each(function(id, el){
@@ -56,7 +56,7 @@ $(function()
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -85,7 +85,7 @@ $(function()
 
             showElem();
             sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroPuerto(lastGeometry, featureLayer_urls[source], source, true);
+                mostrarFeaturesDentroPuerto1(lastGeometry, featureLayer_urls[source], source, true);
             });
             hideElem();
         } else {
@@ -93,65 +93,10 @@ $(function()
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
-//Codigo modificado para que se genere la tabla a partir del boton secundario por estados 
-    
-    
-    $(".clickable11").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
-        var clicked = this;
-        $(clicked).toggleClass("clicked");
-        $(".clickable11").each(function(id, el){
-            if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
-        })
-        borrarCapas();
-        if(featureTables.length > 0){
-            featureTables.forEach(function(ft){
-                ft.destroy();
-            })
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-        }
-        if($(clicked).hasClass("clicked") && lastGeometry){
-            showElem();
-            sourcesClicked = $(clicked).attr("data-sources");
-            var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
-            var templateSource = $("#featureTable-template").html();
-            var template = Handlebars.compile(templateSource);
-            var outputHTML = template({features: sources});
-            $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+//Codigo modificado para que se genere la tabla a partir del boton secundario por estados
 
-            sistemaExpuestoActivo = $(".tabs__item.active").text();
 
-            $(".tabs__item").on("click", function(){
-                var tab = $(".tabs__item").index(this);
-                $(".tabs__item").removeClass("active");
-                $(".panels__item").removeClass("active");
-                $(this).addClass("active");
-                var panel = $(".panels__item")[tab];
-                $(panel).addClass("active");
-                sistemaExpuestoActivo = $(this).text();
-            });
 
-            $("#downloadFeature").on("click", function(){
-                var activeFeature = $(".tabs__item.active").attr("data-feature");
-                createFeatureTableCSV(activeFeature);
-            });
-
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-
-            showElem();
-            sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroPuerto(lastGeometry, featureLayer_urls[source], source, true);
-            });
-            hideElem();
-        } else {
-            sistemaExpuestoActivo = "";
-            $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
-        }
-    })
 
 function mostrarFeaturesDentroPuerto(geometry, url, name, visible = false){
     require([
@@ -189,15 +134,15 @@ function mostrarFeaturesDentroPuerto(geometry, url, name, visible = false){
             outFields: ["IDENTIFICA","CALI_REPR","TIPO"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'IDENTIFICA', 
-                alias: 'Identificador', 
+                name: 'IDENTIFICA',
+                alias: 'Identificador',
               },
               {
-                name: 'CALI_REPR', 
+                name: 'CALI_REPR',
                 alias: 'Estatus',
               },
               {
-                name: 'TIPO', 
+                name: 'TIPO',
                 alias: 'Tipo',
               }
             ],
@@ -206,7 +151,96 @@ function mostrarFeaturesDentroPuerto(geometry, url, name, visible = false){
             infoTemplate: new InfoTemplate("Feature", "${*}"),
             id: name
         });
-        
+
+        featureLayer.on("error", function(error){
+            console.log("Ocurrió un error", error);
+        })
+
+        featureLayer.on("load", function(){
+            var queryTask = new QueryTask(url);
+            var queryFeature = new Query();
+            queryFeature.geometry = geometry;
+            queryFeature.returnGeometry = false;
+            queryFeature.maxAllowableOffset = 10;
+            queryTask.on("error", function(error){
+                alert("Ocurrió un error", error);
+            })
+
+            queryTask.executeForIds(queryFeature,function(results){
+                if(!results){
+                    console.log("Sin resultados", name.split(" ").join(""));
+                    $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
+                    return;
+                } else {
+                    var noResults = results.length;
+                    var defExp = getQuery(results, featureLayer.objectIdField);
+
+                    featureLayer.setDefinitionExpression(defExp);
+                    map.addLayer(featureLayer);
+                    var layerAdd = map.on('update-end', function(){
+                        console.log("Capa agregada");
+                        //loadFetureTablePuerto(featureLayer, name, noResults)
+                        layerAdd.remove();
+                    })
+                }
+            });
+        })
+    })
+}
+function mostrarFeaturesDentroPuerto1(geometry, url, name, visible = false){
+    require([
+        "esri/layers/FeatureLayer",
+        "esri/dijit/FeatureTable",
+        "esri/tasks/query",
+        "esri/tasks/QueryTask",
+        "esri/geometry/Circle",
+        "esri/graphic",
+        "esri/InfoTemplate",
+        "esri/symbols/PictureMarkerSymbol",
+        "esri/symbols/SimpleMarkerSymbol",
+        "esri/symbols/SimpleLineSymbol",
+        "esri/symbols/SimpleFillSymbol",
+        "esri/renderers/SimpleRenderer",
+        "esri/config",
+        "esri/Color"
+        ], function(
+            FeatureLayer,
+            FeatureTable,
+            Query,
+            QueryTask,
+            Circle,
+            Graphic,
+            InfoTemplate,
+            PictureMarkerSymbol,
+            SimpleMarkerSymbol,
+            SimpleLineSymbol,
+            SimpleFillSymbol,
+            SimpleRenderer,
+            esriConfig,
+            Color
+        ){
+        var featureLayer = new FeatureLayer(url,{//La funcion que modifica la informacion que se muestra al dar click sobre el icono
+            outFields: ["IDENTIFICA","CALI_REPR","TIPO"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
+            fieldInfos: [
+              {
+                name: 'IDENTIFICA',
+                alias: 'Identificador',
+              },
+              {
+                name: 'CALI_REPR',
+                alias: 'Estatus',
+              },
+              {
+                name: 'TIPO',
+                alias: 'Tipo',
+              }
+            ],
+            mode: FeatureLayer.MODE_ONDEMAND,
+            visible: true,
+            infoTemplate: new InfoTemplate("Feature", "${*}"),
+            id: name
+        });
+
         featureLayer.on("error", function(error){
             console.log("Ocurrió un error", error);
         })
@@ -275,24 +309,24 @@ function loadFetureTablePuerto(featureLayer, name, noItems)//Funcion que se enca
             "outFields": ["IDENTIFICA","CALI_REPR","TIPO"],//Aqui se modifica para generar la tabla con la informacion que se requiere y no toda la informacion.
             fieldInfos: [
               {
-                name: 'IDENTIFICA', 
-                alias: 'Identificador', 
+                name: 'IDENTIFICA',
+                alias: 'Identificador',
               },
               {
-                name: 'CALI_REPR', 
+                name: 'CALI_REPR',
                 alias: 'Estatus',
               },
               {
-                name: 'TIPO', 
+                name: 'TIPO',
                 alias: 'Tipo',
               }
             ],
-            map : map, 
+            map : map,
             editable: false,
             syncSelection: true,
             batchCount: noItems,
             dateOptions: {
-                datePattern: 'M/d/y', 
+                datePattern: 'M/d/y',
                 timeEnabled: true,
                 timePattern: 'H:mm',
             }
@@ -306,7 +340,7 @@ function loadFetureTablePuerto(featureLayer, name, noItems)//Funcion que se enca
             query.returnGeometry = false;
             query.objectIds = [featureId];
             query.where = "1=1";
-            
+
             map.getLayer(name).queryFeatures(query, function(featureSet){
                 if(featureSet.features[0].geometry.type === "polygon"){
                     var selectionSymbol =  new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
@@ -325,7 +359,7 @@ function loadFetureTablePuerto(featureLayer, name, noItems)//Funcion que se enca
                     // map.centerAndZoom(featureSet.features[0].geometry, 16);
                 }
             })
-            
+
         })
 
         featureTable.on("load", function(){
@@ -347,15 +381,15 @@ function loadFetureTablePuerto(featureLayer, name, noItems)//Funcion que se enca
                 if (evt.graphic && evt.graphic.attributes) {
                     var feature = evt.graphic
                     var featureId = feature.attributes[evt.graphic.getLayer().objectIdField];
-        
+
                     var query = new Query();
                     query.returnGeometry = false;
                     query.objectIds = [featureId];
                     query.where = "1=1";
-        
+
                     map.getLayer(name).selectFeatures(query, FeatureLayer.SELECTION_NEW);
                     // featureTable.centerOnSelection();
-                }                   
+                }
             });
         })
 
@@ -399,7 +433,7 @@ function loadFetureTablePuerto(featureLayer, name, noItems)//Funcion que se enca
 
 //Inicio Codigo para el Municipios
 
-    $(".clickableMunicipio").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+    $(".clickableMunicipio").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickableMunicipio").each(function(id, el){
@@ -418,7 +452,7 @@ function loadFetureTablePuerto(featureLayer, name, noItems)//Funcion que se enca
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -449,16 +483,16 @@ function loadFetureTablePuerto(featureLayer, name, noItems)//Funcion que se enca
             sourcesClicked.split("/").forEach(function(source){
                 mostrarFeaturesDentroMunicipio(lastGeometry, featureLayer_urls[source], source, true);
             });
-            hideElem();
+           hideElem();
         } else {
             sistemaExpuestoActivo = "";
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
-//Codigo modificado para que se genere la tabla a partir del boton secundario por estados 
-    
-    
-    $(".clickable10").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+//Codigo modificado para que se genere la tabla a partir del boton secundario por estados
+
+
+    $(".clickable10").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickable10").each(function(id, el){
@@ -477,7 +511,7 @@ function loadFetureTablePuerto(featureLayer, name, noItems)//Funcion que se enca
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -506,7 +540,7 @@ function loadFetureTablePuerto(featureLayer, name, noItems)//Funcion que se enca
 
             showElem();
             sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroMunicipio(lastGeometry, featureLayer_urls[source], source, true);
+                mostrarFeaturesDentroMunicipio1(lastGeometry, featureLayer_urls[source], source, true);
             });
             hideElem();
         } else {
@@ -515,6 +549,7 @@ function loadFetureTablePuerto(featureLayer, name, noItems)//Funcion que se enca
         }
     })
 
+//son dos funciones iguales pero es necesario para arregar el bug de las tablas repetidas
 function mostrarFeaturesDentroMunicipio(geometry, url, name, visible = false){
     require([
         "esri/layers/FeatureLayer",
@@ -551,15 +586,15 @@ function mostrarFeaturesDentroMunicipio(geometry, url, name, visible = false){
             outFields: ["NOM_ENT_","NOM_MUN","POBTOT","POBMAS_","POBFEM_"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'NOM_ENT_', 
-                alias: 'Estado', 
+                name: 'NOM_ENT_',
+                alias: 'Estado',
               },
               {
-                name: 'NOM_MUN', 
+                name: 'NOM_MUN',
                 alias: 'Municipio',
               },
               {
-                name: 'POBTOT', 
+                name: 'POBTOT',
                 alias: 'Poblacion Total',
               },
               {
@@ -576,7 +611,104 @@ function mostrarFeaturesDentroMunicipio(geometry, url, name, visible = false){
             infoTemplate: new InfoTemplate("Feature", "${*}"),
             id: name
         });
-        
+
+        featureLayer.on("error", function(error){
+            console.log("Ocurrió un error", error);
+        })
+
+        featureLayer.on("load", function(){
+            var queryTask = new QueryTask(url);
+            var queryFeature = new Query();
+            queryFeature.geometry = geometry;
+            queryFeature.returnGeometry = false;
+            queryFeature.maxAllowableOffset = 10;
+            queryTask.on("error", function(error){
+                alert("Ocurrió un error", error);
+            })
+
+            queryTask.executeForIds(queryFeature,function(results){
+                if(!results){
+                    console.log("Sin resultados", name.split(" ").join(""));
+                    $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
+                    return;
+                } else {
+                    var noResults = results.length;
+                    var defExp = getQuery(results, featureLayer.objectIdField);
+
+                    featureLayer.setDefinitionExpression(defExp);
+                    map.addLayer(featureLayer);
+                    var layerAdd = map.on('update-end', function(){
+                        console.log("Capa agregada");
+                        //loadFetureTableMunicipio(featureLayer, name, noResults) Este es el codigo que generaba el bug del programa para las tablas
+                        layerAdd.remove();
+                    })
+                }
+            });
+        })
+    })
+}
+function mostrarFeaturesDentroMunicipio1(geometry, url, name, visible = false){
+    require([
+        "esri/layers/FeatureLayer",
+        "esri/dijit/FeatureTable",
+        "esri/tasks/query",
+        "esri/tasks/QueryTask",
+        "esri/geometry/Circle",
+        "esri/graphic",
+        "esri/InfoTemplate",
+        "esri/symbols/PictureMarkerSymbol",
+        "esri/symbols/SimpleMarkerSymbol",
+        "esri/symbols/SimpleLineSymbol",
+        "esri/symbols/SimpleFillSymbol",
+        "esri/renderers/SimpleRenderer",
+        "esri/config",
+        "esri/Color"
+        ], function(
+            FeatureLayer,
+            FeatureTable,
+            Query,
+            QueryTask,
+            Circle,
+            Graphic,
+            InfoTemplate,
+            PictureMarkerSymbol,
+            SimpleMarkerSymbol,
+            SimpleLineSymbol,
+            SimpleFillSymbol,
+            SimpleRenderer,
+            esriConfig,
+            Color
+        ){
+        var featureLayer = new FeatureLayer(url,{//La funcion que modifica la informacion que se muestra al dar click sobre el icono
+            outFields: ["NOM_ENT_","NOM_MUN","POBTOT","POBMAS_","POBFEM_"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
+            fieldInfos: [
+              {
+                name: 'NOM_ENT_',
+                alias: 'Estado',
+              },
+              {
+                name: 'NOM_MUN',
+                alias: 'Municipio',
+              },
+              {
+                name: 'POBTOT',
+                alias: 'Poblacion Total',
+              },
+              {
+                name: 'POBMAS_',
+                alias: 'Poblacion Masculina',
+              },
+              {
+                name: 'POBFEM_',
+                alias: 'Poblacion Femenina',
+              }
+            ],
+            mode: FeatureLayer.MODE_ONDEMAND,
+            visible: true,
+            infoTemplate: new InfoTemplate("Feature", "${*}"),
+            id: name
+        });
+
         featureLayer.on("error", function(error){
             console.log("Ocurrió un error", error);
         })
@@ -645,15 +777,15 @@ function loadFetureTableMunicipio(featureLayer, name, noItems)//Funcion que se e
             "outFields": ["NOM_ENT_","NOM_MUN","POBTOT","POBMAS_","POBFEM_"],//Aqui se modifica para generar la tabla con la informacion que se requiere y no toda la informacion.
             fieldInfos: [
               {
-                name: 'NOM_ENT_', 
-                alias: 'Estado', 
+                name: 'NOM_ENT_',
+                alias: 'Estado',
               },
               {
-                name: 'NOM_MUN', 
+                name: 'NOM_MUN',
                 alias: 'Municipio',
               },
               {
-                name: 'POBTOT', 
+                name: 'POBTOT',
                 alias: 'Poblacion Total',
               },
               {
@@ -665,12 +797,12 @@ function loadFetureTableMunicipio(featureLayer, name, noItems)//Funcion que se e
                 alias: 'Poblacion Femenina',
               }
             ],
-            map : map, 
+            map : map,
             editable: false,
             syncSelection: true,
             batchCount: noItems,
             dateOptions: {
-                datePattern: 'M/d/y', 
+                datePattern: 'M/d/y',
                 timeEnabled: true,
                 timePattern: 'H:mm',
             }
@@ -684,7 +816,7 @@ function loadFetureTableMunicipio(featureLayer, name, noItems)//Funcion que se e
             query.returnGeometry = false;
             query.objectIds = [featureId];
             query.where = "1=1";
-            
+
             map.getLayer(name).queryFeatures(query, function(featureSet){
                 if(featureSet.features[0].geometry.type === "polygon"){
                     var selectionSymbol =  new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
@@ -703,7 +835,7 @@ function loadFetureTableMunicipio(featureLayer, name, noItems)//Funcion que se e
                     // map.centerAndZoom(featureSet.features[0].geometry, 16);
                 }
             })
-            
+
         })
 
         featureTable.on("load", function(){
@@ -725,15 +857,15 @@ function loadFetureTableMunicipio(featureLayer, name, noItems)//Funcion que se e
                 if (evt.graphic && evt.graphic.attributes) {
                     var feature = evt.graphic
                     var featureId = feature.attributes[evt.graphic.getLayer().objectIdField];
-        
+
                     var query = new Query();
                     query.returnGeometry = false;
                     query.objectIds = [featureId];
                     query.where = "1=1";
-        
+
                     map.getLayer(name).selectFeatures(query, FeatureLayer.SELECTION_NEW);
                     // featureTable.centerOnSelection();
-                }                   
+                }
             });
         })
 
@@ -800,7 +932,7 @@ function loadFetureTableMunicipio(featureLayer, name, noItems)//Funcion que se e
 
 
 //Inicio de codigo de carretera
-$(".clickableCarretera").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+$(".clickableCarretera").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickableCarretera").each(function(id, el){
@@ -819,7 +951,7 @@ $(".clickableCarretera").on("click", function(){//.clickable genera la tabla par
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -856,7 +988,7 @@ $(".clickableCarretera").on("click", function(){//.clickable genera la tabla par
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
-    
+
     function mostrarFeaturesDentroCarretera(geometry, url, name, visible = false){
     require([
         "esri/layers/FeatureLayer",
@@ -893,11 +1025,11 @@ $(".clickableCarretera").on("click", function(){//.clickable genera la tabla par
             outFields: ["TIPO_VIAL","NOMBRE","ID_RED","COND_PAV","CARRILES","ADMINISTRA","VELOCIDAD","FECHA_ACT"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'FECHA_ACT', 
-                alias: 'Feche de Actulización', 
+                name: 'FECHA_ACT',
+                alias: 'Feche de Actulización',
               },
               {
-                name: 'NOMBRE', 
+                name: 'NOMBRE',
                 alias: 'Nombre',
               },
               {
@@ -905,7 +1037,7 @@ $(".clickableCarretera").on("click", function(){//.clickable genera la tabla par
                 alias: 'Id. Red Vial',
               },
               {
-                name: 'COND_PAV', 
+                name: 'COND_PAV',
                 alias: 'Composicion',
               },
               {
@@ -926,7 +1058,7 @@ $(".clickableCarretera").on("click", function(){//.clickable genera la tabla par
             infoTemplate: new InfoTemplate("Feature", "${*}"),
             id: name
         });
-        
+
         featureLayer.on("error", function(error){
             console.log("Ocurrió un error", error);
         })
@@ -965,8 +1097,8 @@ $(".clickableCarretera").on("click", function(){//.clickable genera la tabla par
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar 
-    $(".clickable9").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+//Codigo que genera la tabla del boton para mostrar
+    $(".clickable9").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickable9").each(function(id, el){
@@ -985,7 +1117,7 @@ $(".clickableCarretera").on("click", function(){//.clickable genera la tabla par
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -1057,11 +1189,11 @@ function loadFetureTableCarretera(featureLayer, name, noItems)//Funcion que se e
            "outFields": ["TIPO_VIAL","NOMBRE","ID_RED","COND_PAV","CARRILES","ADMINISTRA","VELOCIDAD","FECHA_ACT"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'FECHA_ACT', 
-                alias: 'Feche de Actulización', 
+                name: 'FECHA_ACT',
+                alias: 'Feche de Actulización',
               },
               {
-                name: 'NOMBRE', 
+                name: 'NOMBRE',
                 alias: 'Nombre',
               },
               {
@@ -1069,7 +1201,7 @@ function loadFetureTableCarretera(featureLayer, name, noItems)//Funcion que se e
                 alias: 'Id. Red Vial',
               },
               {
-                name: 'COND_PAV', 
+                name: 'COND_PAV',
                 alias: 'Composicion',
               },
               {
@@ -1086,12 +1218,12 @@ function loadFetureTableCarretera(featureLayer, name, noItems)//Funcion que se e
               }
             ],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             //Aqui se modifica para generar la tabla con la informacion que se requiere y no toda la informacion.
-            map : map, 
+            map : map,
             editable: false,
             syncSelection: true,
             batchCount: noItems,
             dateOptions: {
-                datePattern: 'M/d/y', 
+                datePattern: 'M/d/y',
                 timeEnabled: true,
                 timePattern: 'H:mm',
             }
@@ -1105,7 +1237,7 @@ function loadFetureTableCarretera(featureLayer, name, noItems)//Funcion que se e
             query.returnGeometry = false;
             query.objectIds = [featureId];
             query.where = "1=1";
-            
+
             map.getLayer(name).queryFeatures(query, function(featureSet){
                 if(featureSet.features[0].geometry.type === "polygon"){
                     var selectionSymbol =  new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
@@ -1124,7 +1256,7 @@ function loadFetureTableCarretera(featureLayer, name, noItems)//Funcion que se e
                     // map.centerAndZoom(featureSet.features[0].geometry, 16);
                 }
             })
-            
+
         })
 
         featureTable.on("load", function(){
@@ -1146,15 +1278,15 @@ function loadFetureTableCarretera(featureLayer, name, noItems)//Funcion que se e
                 if (evt.graphic && evt.graphic.attributes) {
                     var feature = evt.graphic
                     var featureId = feature.attributes[evt.graphic.getLayer().objectIdField];
-        
+
                     var query = new Query();
                     query.returnGeometry = false;
                     query.objectIds = [featureId];
                     query.where = "1=1";
-        
+
                     map.getLayer(name).selectFeatures(query, FeatureLayer.SELECTION_NEW);
                     // featureTable.centerOnSelection();
-                }                   
+                }
             });
         })
 
@@ -1218,7 +1350,7 @@ function loadFetureTableCarretera(featureLayer, name, noItems)//Funcion que se e
 
 
 //Inicio de codigo de Abasto
-$(".clickableAbasto").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+$(".clickableAbasto").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickableAbasto").each(function(id, el){
@@ -1237,7 +1369,7 @@ $(".clickableAbasto").on("click", function(){//.clickable genera la tabla para a
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -1274,7 +1406,7 @@ $(".clickableAbasto").on("click", function(){//.clickable genera la tabla para a
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
-    
+
     function mostrarFeaturesDentroAbasto(geometry, url, name, visible = false){
     require([
         "esri/layers/FeatureLayer",
@@ -1314,7 +1446,7 @@ $(".clickableAbasto").on("click", function(){//.clickable genera la tabla para a
             infoTemplate: new InfoTemplate("Feature", "${*}"),
             id: name
         });
-        
+
         featureLayer.on("error", function(error){
             console.log("Ocurrió un error", error);
         })
@@ -1353,8 +1485,8 @@ $(".clickableAbasto").on("click", function(){//.clickable genera la tabla para a
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar 
-    $(".clickable8").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+//Codigo que genera la tabla del boton para mostrar
+    $(".clickable8").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickable8").each(function(id, el){
@@ -1373,7 +1505,7 @@ $(".clickableAbasto").on("click", function(){//.clickable genera la tabla para a
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -1444,12 +1576,12 @@ function loadFetureTableAbasto(featureLayer, name, noItems)//Funcion que se enca
             featureLayer : featureLayer,
             "outFields": ["*"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             //Aqui se modifica para generar la tabla con la informacion que se requiere y no toda la informacion.
-            map : map, 
+            map : map,
             editable: false,
             syncSelection: true,
             batchCount: noItems,
             dateOptions: {
-                datePattern: 'M/d/y', 
+                datePattern: 'M/d/y',
                 timeEnabled: true,
                 timePattern: 'H:mm',
             }
@@ -1463,7 +1595,7 @@ function loadFetureTableAbasto(featureLayer, name, noItems)//Funcion que se enca
             query.returnGeometry = false;
             query.objectIds = [featureId];
             query.where = "1=1";
-            
+
             map.getLayer(name).queryFeatures(query, function(featureSet){
                 if(featureSet.features[0].geometry.type === "polygon"){
                     var selectionSymbol =  new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
@@ -1482,7 +1614,7 @@ function loadFetureTableAbasto(featureLayer, name, noItems)//Funcion que se enca
                     // map.centerAndZoom(featureSet.features[0].geometry, 16);
                 }
             })
-            
+
         })
 
         featureTable.on("load", function(){
@@ -1504,15 +1636,15 @@ function loadFetureTableAbasto(featureLayer, name, noItems)//Funcion que se enca
                 if (evt.graphic && evt.graphic.attributes) {
                     var feature = evt.graphic
                     var featureId = feature.attributes[evt.graphic.getLayer().objectIdField];
-        
+
                     var query = new Query();
                     query.returnGeometry = false;
                     query.objectIds = [featureId];
                     query.where = "1=1";
-        
+
                     map.getLayer(name).selectFeatures(query, FeatureLayer.SELECTION_NEW);
                     // featureTable.centerOnSelection();
-                }                   
+                }
             });
         })
 
@@ -1580,7 +1712,7 @@ function loadFetureTableAbasto(featureLayer, name, noItems)//Funcion que se enca
 
 
 //Inicio de codigo de Diconsa
-$(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+$(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickableDiconsa").each(function(id, el){
@@ -1599,7 +1731,7 @@ $(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para 
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -1636,7 +1768,7 @@ $(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para 
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
-    
+
     function mostrarFeaturesDentroDiconsa(geometry, url, name, visible = false){
     require([
         "esri/layers/FeatureLayer",
@@ -1673,15 +1805,15 @@ $(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para 
             outFields: ["ESTADO","MUNICIPIO","LOCALIDAD","DIRECCION","NO_TIENDA_","CVE_INEGI","LONG_GDEC","LAT_GDEC"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'ESTADO', 
-                alias: 'Estado', 
+                name: 'ESTADO',
+                alias: 'Estado',
               },
               {
-                name: 'MUNICIPIO', 
+                name: 'MUNICIPIO',
                 alias: 'Municipio',
               },
               {
-                name: 'LOCALIDAD', 
+                name: 'LOCALIDAD',
                 alias: 'Localidad',
               },
               {
@@ -1710,7 +1842,7 @@ $(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para 
             infoTemplate: new InfoTemplate("Feature", "${*}"),
             id: name
         });
-        
+
         featureLayer.on("error", function(error){
             console.log("Ocurrió un error", error);
         })
@@ -1749,8 +1881,8 @@ $(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para 
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar 
-    $(".clickable7").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+//Codigo que genera la tabla del boton para mostrar
+    $(".clickable7").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickable7").each(function(id, el){
@@ -1769,7 +1901,7 @@ $(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para 
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -1841,15 +1973,15 @@ function loadFetureTableDiconsa(featureLayer, name, noItems)//Funcion que se enc
             "outFields": ["ESTADO","MUNICIPIO","LOCALIDAD","DIRECCION","NO_TIENDA_","CVE_INEGI","LONG_GDEC","LAT_GDEC"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'ESTADO', 
-                alias: 'Estado', 
+                name: 'ESTADO',
+                alias: 'Estado',
               },
               {
-                name: 'MUNICIPIO', 
+                name: 'MUNICIPIO',
                 alias: 'Municipio',
               },
               {
-                name: 'LOCALIDAD', 
+                name: 'LOCALIDAD',
                 alias: 'Localidad',
               },
               {
@@ -1873,12 +2005,12 @@ function loadFetureTableDiconsa(featureLayer, name, noItems)//Funcion que se enc
                 alias: 'Latitud'
               }
             ],//Aqui se modifica para generar la tabla con la informacion que se requiere y no toda la informacion.
-            map : map, 
+            map : map,
             editable: false,
             syncSelection: true,
             batchCount: noItems,
             dateOptions: {
-                datePattern: 'M/d/y', 
+                datePattern: 'M/d/y',
                 timeEnabled: true,
                 timePattern: 'H:mm',
             }
@@ -1892,7 +2024,7 @@ function loadFetureTableDiconsa(featureLayer, name, noItems)//Funcion que se enc
             query.returnGeometry = false;
             query.objectIds = [featureId];
             query.where = "1=1";
-            
+
             map.getLayer(name).queryFeatures(query, function(featureSet){
                 if(featureSet.features[0].geometry.type === "polygon"){
                     var selectionSymbol =  new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
@@ -1911,7 +2043,7 @@ function loadFetureTableDiconsa(featureLayer, name, noItems)//Funcion que se enc
                     // map.centerAndZoom(featureSet.features[0].geometry, 16);
                 }
             })
-            
+
         })
 
         featureTable.on("load", function(){
@@ -1933,15 +2065,15 @@ function loadFetureTableDiconsa(featureLayer, name, noItems)//Funcion que se enc
                 if (evt.graphic && evt.graphic.attributes) {
                     var feature = evt.graphic
                     var featureId = feature.attributes[evt.graphic.getLayer().objectIdField];
-        
+
                     var query = new Query();
                     query.returnGeometry = false;
                     query.objectIds = [featureId];
                     query.where = "1=1";
-        
+
                     map.getLayer(name).selectFeatures(query, FeatureLayer.SELECTION_NEW);
                     // featureTable.centerOnSelection();
-                }                   
+                }
             });
         })
 
@@ -1963,7 +2095,7 @@ function loadFetureTableDiconsa(featureLayer, name, noItems)//Funcion que se enc
 
 
 //Inicio de codigo de Banco
-$(".clickableBanco").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+$(".clickableBanco").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickableBanco").each(function(id, el){
@@ -1982,7 +2114,7 @@ $(".clickableBanco").on("click", function(){//.clickable genera la tabla para ap
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -2019,7 +2151,7 @@ $(".clickableBanco").on("click", function(){//.clickable genera la tabla para ap
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
-    
+
     function mostrarFeaturesDentroBanco(geometry, url, name, visible = false){
     require([
         "esri/layers/FeatureLayer",
@@ -2056,15 +2188,15 @@ $(".clickableBanco").on("click", function(){//.clickable genera la tabla para ap
             outFields: ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","COD_POSTAL","LATITUD","LONGITUD"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'ENTIDAD', 
-                alias: 'Estado', 
+                name: 'ENTIDAD',
+                alias: 'Estado',
               },
               {
-                name: 'MUNICIPIO', 
+                name: 'MUNICIPIO',
                 alias: 'Municipio',
               },
               {
-                name: 'LOCALIDAD', 
+                name: 'LOCALIDAD',
                 alias: 'Localidad',
               },
               {
@@ -2089,7 +2221,7 @@ $(".clickableBanco").on("click", function(){//.clickable genera la tabla para ap
             infoTemplate: new InfoTemplate("Feature", "${*}"),
             id: name
         });
-        
+
         featureLayer.on("error", function(error){
             console.log("Ocurrió un error", error);
         })
@@ -2142,8 +2274,8 @@ $(".clickableBanco").on("click", function(){//.clickable genera la tabla para ap
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar 
-    $(".clickable6").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+//Codigo que genera la tabla del boton para mostrar
+    $(".clickable6").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickable6").each(function(id, el){
@@ -2162,7 +2294,7 @@ $(".clickableBanco").on("click", function(){//.clickable genera la tabla para ap
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -2234,15 +2366,15 @@ function loadFetureTableBanco(featureLayer, name, noItems)//Funcion que se encar
             "outFields": ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","COD_POSTAL","LATITUD","LONGITUD"],//Aqui se modifica para generar la tabla con la informacion que se requiere y no toda la informacion.
             fieldInfos: [
               {
-                name: 'ENTIDAD', 
-                alias: 'Estado', 
+                name: 'ENTIDAD',
+                alias: 'Estado',
               },
               {
-                name: 'MUNICIPIO', 
+                name: 'MUNICIPIO',
                 alias: 'Municipio',
               },
               {
-                name: 'LOCALIDAD', 
+                name: 'LOCALIDAD',
                 alias: 'Localidad',
               },
               {
@@ -2262,12 +2394,12 @@ function loadFetureTableBanco(featureLayer, name, noItems)//Funcion que se encar
                 alias: 'Longitud'
               }
             ],
-            map : map, 
+            map : map,
             editable: false,
             syncSelection: true,
             batchCount: noItems,
             dateOptions: {
-                datePattern: 'M/d/y', 
+                datePattern: 'M/d/y',
                 timeEnabled: true,
                 timePattern: 'H:mm',
             }
@@ -2281,7 +2413,7 @@ function loadFetureTableBanco(featureLayer, name, noItems)//Funcion que se encar
             query.returnGeometry = false;
             query.objectIds = [featureId];
             query.where = "1=1";
-            
+
             map.getLayer(name).queryFeatures(query, function(featureSet){
                 if(featureSet.features[0].geometry.type === "polygon"){
                     var selectionSymbol =  new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
@@ -2300,7 +2432,7 @@ function loadFetureTableBanco(featureLayer, name, noItems)//Funcion que se encar
                     // map.centerAndZoom(featureSet.features[0].geometry, 16);
                 }
             })
-            
+
         })
 
         featureTable.on("load", function(){
@@ -2322,15 +2454,15 @@ function loadFetureTableBanco(featureLayer, name, noItems)//Funcion que se encar
                 if (evt.graphic && evt.graphic.attributes) {
                     var feature = evt.graphic
                     var featureId = feature.attributes[evt.graphic.getLayer().objectIdField];
-        
+
                     var query = new Query();
                     query.returnGeometry = false;
                     query.objectIds = [featureId];
                     query.where = "1=1";
-        
+
                     map.getLayer(name).selectFeatures(query, FeatureLayer.SELECTION_NEW);
                     // featureTable.centerOnSelection();
-                }                   
+                }
             });
         })
 
@@ -2348,7 +2480,7 @@ function loadFetureTableBanco(featureLayer, name, noItems)//Funcion que se encar
 //Fin de codigo de Banco
 
 //Inicio de codigo de Gasolineras
-$(".clickableGas").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+$(".clickableGas").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickableGas").each(function(id, el){
@@ -2367,7 +2499,7 @@ $(".clickableGas").on("click", function(){//.clickable genera la tabla para apar
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -2404,7 +2536,7 @@ $(".clickableGas").on("click", function(){//.clickable genera la tabla para apar
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
-    
+
     function mostrarFeaturesDentroGas(geometry, url, name, visible = false){
     require([
         "esri/layers/FeatureLayer",
@@ -2441,15 +2573,15 @@ $(".clickableGas").on("click", function(){//.clickable genera la tabla para apar
             outFields: ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","NOM_VIAL","NUMERO_EXT","COD_POSTAL","TELEFONO","LATITUD","LONGITUD"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'ENTIDAD', 
-                alias: 'Estado', 
+                name: 'ENTIDAD',
+                alias: 'Estado',
               },
               {
-                name: 'MUNICIPIO', 
+                name: 'MUNICIPIO',
                 alias: 'Municipio',
               },
               {
-                name: 'LOCALIDAD', 
+                name: 'LOCALIDAD',
                 alias: 'Localidad',
               },
               {
@@ -2487,7 +2619,7 @@ $(".clickableGas").on("click", function(){//.clickable genera la tabla para apar
             infoTemplate: new InfoTemplate("Feature", "${*}"),
             id: name
         });
-        
+
         featureLayer.on("error", function(error){
             console.log("Ocurrió un error", error);
         })
@@ -2540,8 +2672,8 @@ $(".clickableGas").on("click", function(){//.clickable genera la tabla para apar
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar 
-    $(".clickable5").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+//Codigo que genera la tabla del boton para mostrar
+    $(".clickable5").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickable5").each(function(id, el){
@@ -2560,7 +2692,7 @@ $(".clickableGas").on("click", function(){//.clickable genera la tabla para apar
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -2632,15 +2764,15 @@ function loadFetureTableGas(featureLayer, name, noItems)//Funcion que se encarga
             "outFields": ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","NOM_VIAL","NUMERO_EXT","COD_POSTAL","TELEFONO","LATITUD","LONGITUD"],//Aqui se modifica para generar la tabla con la informacion que se requiere y no toda la informacion.
             fieldInfos: [
               {
-                name: 'ENTIDAD', 
-                alias: 'Estado', 
+                name: 'ENTIDAD',
+                alias: 'Estado',
               },
               {
-                name: 'MUNICIPIO', 
+                name: 'MUNICIPIO',
                 alias: 'Municipio',
               },
               {
-                name: 'LOCALIDAD', 
+                name: 'LOCALIDAD',
                 alias: 'Localidad',
               },
               {
@@ -2673,12 +2805,12 @@ function loadFetureTableGas(featureLayer, name, noItems)//Funcion que se encarga
                 alias: 'Longitud'
               }
             ],
-            map : map, 
+            map : map,
             editable: false,
             syncSelection: true,
             batchCount: noItems,
             dateOptions: {
-                datePattern: 'M/d/y', 
+                datePattern: 'M/d/y',
                 timeEnabled: true,
                 timePattern: 'H:mm',
             }
@@ -2692,7 +2824,7 @@ function loadFetureTableGas(featureLayer, name, noItems)//Funcion que se encarga
             query.returnGeometry = false;
             query.objectIds = [featureId];
             query.where = "1=1";
-            
+
             map.getLayer(name).queryFeatures(query, function(featureSet){
                 if(featureSet.features[0].geometry.type === "polygon"){
                     var selectionSymbol =  new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
@@ -2711,7 +2843,7 @@ function loadFetureTableGas(featureLayer, name, noItems)//Funcion que se encarga
                     // map.centerAndZoom(featureSet.features[0].geometry, 16);
                 }
             })
-            
+
         })
 
         featureTable.on("load", function(){
@@ -2733,15 +2865,15 @@ function loadFetureTableGas(featureLayer, name, noItems)//Funcion que se encarga
                 if (evt.graphic && evt.graphic.attributes) {
                     var feature = evt.graphic
                     var featureId = feature.attributes[evt.graphic.getLayer().objectIdField];
-        
+
                     var query = new Query();
                     query.returnGeometry = false;
                     query.objectIds = [featureId];
                     query.where = "1=1";
-        
+
                     map.getLayer(name).selectFeatures(query, FeatureLayer.SELECTION_NEW);
                     // featureTable.centerOnSelection();
-                }                   
+                }
             });
         })
 
@@ -2761,7 +2893,7 @@ function loadFetureTableGas(featureLayer, name, noItems)//Funcion que se encarga
 
 
 //Inicio de codigo de supermercados
-$(".clickableSuper").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+$(".clickableSuper").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickableSuper").each(function(id, el){
@@ -2780,7 +2912,7 @@ $(".clickableSuper").on("click", function(){//.clickable genera la tabla para ap
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -2817,7 +2949,7 @@ $(".clickableSuper").on("click", function(){//.clickable genera la tabla para ap
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
-    
+
     function mostrarFeaturesDentroSuper(geometry, url, name, visible = false){
     require([
         "esri/layers/FeatureLayer",
@@ -2854,15 +2986,15 @@ $(".clickableSuper").on("click", function(){//.clickable genera la tabla para ap
             outFields: ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","NOM_VIAL","NUMERO_EXT","COD_POSTAL","TELEFONO","LATITUD","LONGITUD"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'ENTIDAD', 
-                alias: 'Estado', 
+                name: 'ENTIDAD',
+                alias: 'Estado',
               },
               {
-                name: 'MUNICIPIO', 
+                name: 'MUNICIPIO',
                 alias: 'Municipio',
               },
               {
-                name: 'LOCALIDAD', 
+                name: 'LOCALIDAD',
                 alias: 'Localidad',
               },
               {
@@ -2900,7 +3032,7 @@ $(".clickableSuper").on("click", function(){//.clickable genera la tabla para ap
             infoTemplate: new InfoTemplate("Feature", "${*}"),
             id: name
         });
-        
+
         featureLayer.on("error", function(error){
             console.log("Ocurrió un error", error);
         })
@@ -2953,8 +3085,8 @@ $(".clickableSuper").on("click", function(){//.clickable genera la tabla para ap
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar 
-    $(".clickable4").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+//Codigo que genera la tabla del boton para mostrar
+    $(".clickable4").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickable4").each(function(id, el){
@@ -2973,7 +3105,7 @@ $(".clickableSuper").on("click", function(){//.clickable genera la tabla para ap
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -3045,15 +3177,15 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
             "outFields": ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","NOM_VIAL","NUMERO_EXT","COD_POSTAL","TELEFONO","LATITUD","LONGITUD"],//Aqui se modifica para generar la tabla con la informacion que se requiere y no toda la informacion.
             fieldInfos: [
               {
-                name: 'ENTIDAD', 
-                alias: 'Estado', 
+                name: 'ENTIDAD',
+                alias: 'Estado',
               },
               {
-                name: 'MUNICIPIO', 
+                name: 'MUNICIPIO',
                 alias: 'Municipio',
               },
               {
-                name: 'LOCALIDAD', 
+                name: 'LOCALIDAD',
                 alias: 'Localidad',
               },
               {
@@ -3086,12 +3218,12 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
                 alias: 'Longitud'
               }
             ],
-            map : map, 
+            map : map,
             editable: false,
             syncSelection: true,
             batchCount: noItems,
             dateOptions: {
-                datePattern: 'M/d/y', 
+                datePattern: 'M/d/y',
                 timeEnabled: true,
                 timePattern: 'H:mm',
             }
@@ -3105,7 +3237,7 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
             query.returnGeometry = false;
             query.objectIds = [featureId];
             query.where = "1=1";
-            
+
             map.getLayer(name).queryFeatures(query, function(featureSet){
                 if(featureSet.features[0].geometry.type === "polygon"){
                     var selectionSymbol =  new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
@@ -3124,7 +3256,7 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
                     // map.centerAndZoom(featureSet.features[0].geometry, 16);
                 }
             })
-            
+
         })
 
         featureTable.on("load", function(){
@@ -3146,15 +3278,15 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
                 if (evt.graphic && evt.graphic.attributes) {
                     var feature = evt.graphic
                     var featureId = feature.attributes[evt.graphic.getLayer().objectIdField];
-        
+
                     var query = new Query();
                     query.returnGeometry = false;
                     query.objectIds = [featureId];
                     query.where = "1=1";
-        
+
                     map.getLayer(name).selectFeatures(query, FeatureLayer.SELECTION_NEW);
                     // featureTable.centerOnSelection();
-                }                   
+                }
             });
         })
 
@@ -3174,7 +3306,7 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
 
 //Cidigo de Hoteles
 
-    $(".clickableHotel").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+    $(".clickableHotel").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickableHotel").each(function(id, el){
@@ -3193,7 +3325,7 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -3230,7 +3362,7 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
-    
+
     function mostrarFeaturesDentroHotel(geometry, url, name, visible = false){
     require([
         "esri/layers/FeatureLayer",
@@ -3267,15 +3399,15 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
             outFields: ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","NOM_VIAL","NUMERO_EXT","COD_POSTAL","TELEFONO","LATITUD","LONGITUD"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'ENTIDAD', 
-                alias: 'Estado', 
+                name: 'ENTIDAD',
+                alias: 'Estado',
               },
               {
-                name: 'MUNICIPIO', 
+                name: 'MUNICIPIO',
                 alias: 'Municipio',
               },
               {
-                name: 'LOCALIDAD', 
+                name: 'LOCALIDAD',
                 alias: 'Localidad',
               },
               {
@@ -3313,7 +3445,7 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
             infoTemplate: new InfoTemplate("Feature", "${*}"),
             id: name
         });
-        
+
         featureLayer.on("error", function(error){
             console.log("Ocurrió un error", error);
         })
@@ -3366,8 +3498,8 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar 
-    $(".clickable3").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+//Codigo que genera la tabla del boton para mostrar
+    $(".clickable3").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickable3").each(function(id, el){
@@ -3386,7 +3518,7 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -3458,15 +3590,15 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
             "outFields": ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","NOM_VIAL","NUMERO_EXT","COD_POSTAL","TELEFONO","LATITUD","LONGITUD"],//Aqui se modifica para generar la tabla con la informacion que se requiere y no toda la informacion.
             fieldInfos: [
               {
-                name: 'ENTIDAD', 
-                alias: 'Estado', 
+                name: 'ENTIDAD',
+                alias: 'Estado',
               },
               {
-                name: 'MUNICIPIO', 
+                name: 'MUNICIPIO',
                 alias: 'Municipio',
               },
               {
-                name: 'LOCALIDAD', 
+                name: 'LOCALIDAD',
                 alias: 'Localidad',
               },
               {
@@ -3499,12 +3631,12 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
                 alias: 'Longitud'
               }
             ],
-            map : map, 
+            map : map,
             editable: false,
             syncSelection: true,
             batchCount: noItems,
             dateOptions: {
-                datePattern: 'M/d/y', 
+                datePattern: 'M/d/y',
                 timeEnabled: true,
                 timePattern: 'H:mm',
             }
@@ -3518,7 +3650,7 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
             query.returnGeometry = false;
             query.objectIds = [featureId];
             query.where = "1=1";
-            
+
             map.getLayer(name).queryFeatures(query, function(featureSet){
                 if(featureSet.features[0].geometry.type === "polygon"){
                     var selectionSymbol =  new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
@@ -3537,7 +3669,7 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
                     // map.centerAndZoom(featureSet.features[0].geometry, 16);
                 }
             })
-            
+
         })
 
         featureTable.on("load", function(){
@@ -3559,15 +3691,15 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
                 if (evt.graphic && evt.graphic.attributes) {
                     var feature = evt.graphic
                     var featureId = feature.attributes[evt.graphic.getLayer().objectIdField];
-        
+
                     var query = new Query();
                     query.returnGeometry = false;
                     query.objectIds = [featureId];
                     query.where = "1=1";
-        
+
                     map.getLayer(name).selectFeatures(query, FeatureLayer.SELECTION_NEW);
                     // featureTable.centerOnSelection();
-                }                   
+                }
             });
         })
 
@@ -3592,7 +3724,7 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
 
 //Inicio Codigo para el aeropuerto
 
-    $(".clickableaero").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+    $(".clickableaero").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickableaeros").each(function(id, el){
@@ -3607,11 +3739,13 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
                 $(".clicked").click();
             });
         }
+
+
         if($(clicked).hasClass("clicked") && lastGeometry){
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
@@ -3646,12 +3780,13 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
         } else {
             sistemaExpuestoActivo = "";
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
+
         }
     })
-//Codigo modificado para que se genere la tabla a partir del boton secundario por estados 
-    
-    
-    $(".clickable2").on("click", function(){//.clickable genera la tabla para aparecer en el mapa 
+//Codigo modificado para que se genere la tabla a partir del boton secundario por estados
+
+
+    $(".clickable2").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
         var clicked = this;
         $(clicked).toggleClass("clicked");
         $(".clickable2").each(function(id, el){
@@ -3670,11 +3805,11 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
             showElem();
             sourcesClicked = $(clicked).attr("data-sources");
             var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
-            
+
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
-            $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+            //$('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
 
             sistemaExpuestoActivo = $(".tabs__item.active").text();
 
@@ -3707,7 +3842,7 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
-    
+
 
 
     function borrarCapas(){
@@ -3754,15 +3889,15 @@ function mostrarFeaturesDentroAeropuerto(geometry, url, name, visible = false){
             outFields: ["NOMBRE","CLASE","SUBCLASE"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
             fieldInfos: [
               {
-                name: 'NOMBRE', 
-                alias: 'NOMBRE', 
+                name: 'NOMBRE',
+                alias: 'NOMBRE',
               },
               {
-                name: 'CLASE', 
+                name: 'CLASE',
                 alias: 'CLASE',
               },
               {
-                name: 'SUBCLASE', 
+                name: 'SUBCLASE',
                 alias: 'SUBCLASE',
               }
             ],
@@ -3771,7 +3906,7 @@ function mostrarFeaturesDentroAeropuerto(geometry, url, name, visible = false){
             infoTemplate: new InfoTemplate("Feature", "${*}"),
             id: name
         });
-        
+
         featureLayer.on("error", function(error){
             console.log("Ocurrió un error", error);
         })
@@ -3840,24 +3975,24 @@ function loadFetureTableAero(featureLayer, name, noItems)//Funcion que se encarg
             "outFields": ["CLASE","NOMBRE","SUBCLASE"],//Aqui se modifica para generar la tabla con la informacion que se requiere y no toda la informacion.
             fieldInfos: [
               {
-                name: 'CLASE', 
-                alias: 'Tipo', 
+                name: 'CLASE',
+                alias: 'Tipo',
               },
               {
-                name: 'NOMBRE', 
+                name: 'NOMBRE',
                 alias: 'Nombre',
               },
               {
-                name: 'SUBCLASE', 
+                name: 'SUBCLASE',
                 alias: 'Categoria',
               }
             ],
-            map : map, 
+            map : map,
             editable: false,
             syncSelection: true,
             batchCount: noItems,
             dateOptions: {
-                datePattern: 'M/d/y', 
+                datePattern: 'M/d/y',
                 timeEnabled: true,
                 timePattern: 'H:mm',
             }
@@ -3871,7 +4006,7 @@ function loadFetureTableAero(featureLayer, name, noItems)//Funcion que se encarg
             query.returnGeometry = false;
             query.objectIds = [featureId];
             query.where = "1=1";
-            
+
             map.getLayer(name).queryFeatures(query, function(featureSet){
                 if(featureSet.features[0].geometry.type === "polygon"){
                     var selectionSymbol =  new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
@@ -3890,7 +4025,7 @@ function loadFetureTableAero(featureLayer, name, noItems)//Funcion que se encarg
                     // map.centerAndZoom(featureSet.features[0].geometry, 16);
                 }
             })
-            
+
         })
 
         featureTable.on("load", function(){
@@ -3912,15 +4047,15 @@ function loadFetureTableAero(featureLayer, name, noItems)//Funcion que se encarg
                 if (evt.graphic && evt.graphic.attributes) {
                     var feature = evt.graphic
                     var featureId = feature.attributes[evt.graphic.getLayer().objectIdField];
-        
+
                     var query = new Query();
                     query.returnGeometry = false;
                     query.objectIds = [featureId];
                     query.where = "1=1";
-        
+
                     map.getLayer(name).selectFeatures(query, FeatureLayer.SELECTION_NEW);
                     // featureTable.centerOnSelection();
-                }                   
+                }
             });
         })
 

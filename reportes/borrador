@@ -1,0 +1,89 @@
+<?php
+    include "simple_html_dom.php";
+    $request = array(
+      'http' => array(
+        'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+        'method' => 'POST',
+        'content' => http_build_query(array(
+          'anio' => '2019',
+          'nivel' => '3',
+          'delegacion' => '16',
+          'distrito' => '-1',
+          'municipio' => '24',
+          'mes' => '1',
+          'moda' => '3',
+          'ciclo' => '3',
+          'tipoprograma' => '0',
+          'consultar' => 'si'
+        )),
+      )
+    );
+    $request1 = array(
+      'http' => array(
+        'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+        'method' => 'POST',
+        'content' => http_build_query(array(
+          'anio' => '2019',
+          'nivel' => '3',
+          'delegacion' => '16',
+          'distrito' => '-1',
+          'municipio' => '24',
+          'mes' => '1',
+          'moda' => '3',
+          'ciclo' => '4',
+          'tipoprograma' => '0',
+          'consultar' => 'si'
+        )),
+      )
+    );
+    $context = stream_context_create($request);
+    $html=file_get_html('http://infosiap.siap.gob.mx:8080/agricola_siap_gobmx/ResumenDelegacion.do',true,$context);
+    $html1=file_get_html('http://infosiap.siap.gob.mx:8080/agricola_siap_gobmx/ResumenDelegacion.do',true,$context);
+
+    //echo $html;
+
+
+
+    $tablePer=$html->find("div#divResultados",0)->outertext;
+    $tableAgri=$html1->find("div#divResultados",0)->outertext;
+
+    //$es = $html->find('table.table table-responsive table-striped table-bordered td');
+    //echo $tablePer;
+    //echo $tableAgri;
+    //print_r($es);
+
+
+
+
+
+    //$ch = curl_init();
+    //$url = 'http://infosiap.siap.gob.mx:8080/agricola_siap_gobmx/ResumenDelegacion.do';
+
+    //$html1=file_get_html("http://infosiap.siap.gob.mx:8080/agricola_siap_gobmx/ResumenDelegacion.do");
+    //$tableRe=$html->find("div#0",0)->outertext;
+    //echo $tableRe;
+
+    //$divf=$html->find("div#divResultados",0)->outertext;
+
+
+
+
+
+
+    //echo $tablePer;
+    //$curl = curl_init();
+    //curl_setopt($curl, CURLOPT_URL, $url);
+    //curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    //curl_setopt($curl, CURLOPT_HEADER, false);
+    //$response = curl_exec($curl);
+    //curl_close($curl);
+
+    //echo $response;
+    //$html->find('div[id=divResultados]', 0)
+    //$html = new simple_html_dom();
+    //$html->load($response);
+    //echo $html;
+
+
+
+?>
