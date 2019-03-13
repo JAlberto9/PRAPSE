@@ -13,7 +13,7 @@ session_start();
 	$Carretera = $_POST["Carretera"];
 	$Diconsa = $_POST["Diconsa"];
 	$Centrales = $_POST["Centrales"];
-	
+
 	echo "".$Poblacion."".$Municipio."".$Hoteles."".$Supermercados."".$Gasolineras;
 
 	$_SESSION["Poblacion"] = $Poblacion;

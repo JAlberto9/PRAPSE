@@ -85,7 +85,7 @@ $(function()
 
             showElem();
             sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroPuerto1(lastGeometry, featureLayer_urls[source], source, true);
+                mostrarFeaturesDentroPuerto(lastGeometry, featureLayer_urls[source], source, true);
             });
             hideElem();
         } else {
@@ -180,95 +180,6 @@ function mostrarFeaturesDentroPuerto(geometry, url, name, visible = false){
                     var layerAdd = map.on('update-end', function(){
                         console.log("Capa agregada");
                         //loadFetureTablePuerto(featureLayer, name, noResults)
-                        layerAdd.remove();
-                    })
-                }
-            });
-        })
-    })
-}
-function mostrarFeaturesDentroPuerto1(geometry, url, name, visible = false){
-    require([
-        "esri/layers/FeatureLayer",
-        "esri/dijit/FeatureTable",
-        "esri/tasks/query",
-        "esri/tasks/QueryTask",
-        "esri/geometry/Circle",
-        "esri/graphic",
-        "esri/InfoTemplate",
-        "esri/symbols/PictureMarkerSymbol",
-        "esri/symbols/SimpleMarkerSymbol",
-        "esri/symbols/SimpleLineSymbol",
-        "esri/symbols/SimpleFillSymbol",
-        "esri/renderers/SimpleRenderer",
-        "esri/config",
-        "esri/Color"
-        ], function(
-            FeatureLayer,
-            FeatureTable,
-            Query,
-            QueryTask,
-            Circle,
-            Graphic,
-            InfoTemplate,
-            PictureMarkerSymbol,
-            SimpleMarkerSymbol,
-            SimpleLineSymbol,
-            SimpleFillSymbol,
-            SimpleRenderer,
-            esriConfig,
-            Color
-        ){
-        var featureLayer = new FeatureLayer(url,{//La funcion que modifica la informacion que se muestra al dar click sobre el icono
-            outFields: ["IDENTIFICA","CALI_REPR","TIPO"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
-            fieldInfos: [
-              {
-                name: 'IDENTIFICA',
-                alias: 'Identificador',
-              },
-              {
-                name: 'CALI_REPR',
-                alias: 'Estatus',
-              },
-              {
-                name: 'TIPO',
-                alias: 'Tipo',
-              }
-            ],
-            mode: FeatureLayer.MODE_ONDEMAND,
-            visible: true,
-            infoTemplate: new InfoTemplate("Feature", "${*}"),
-            id: name
-        });
-
-        featureLayer.on("error", function(error){
-            console.log("Ocurrió un error", error);
-        })
-
-        featureLayer.on("load", function(){
-            var queryTask = new QueryTask(url);
-            var queryFeature = new Query();
-            queryFeature.geometry = geometry;
-            queryFeature.returnGeometry = false;
-            queryFeature.maxAllowableOffset = 10;
-            queryTask.on("error", function(error){
-                alert("Ocurrió un error", error);
-            })
-
-            queryTask.executeForIds(queryFeature,function(results){
-                if(!results){
-                    console.log("Sin resultados", name.split(" ").join(""));
-                    $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
-                    return;
-                } else {
-                    var noResults = results.length;
-                    var defExp = getQuery(results, featureLayer.objectIdField);
-
-                    featureLayer.setDefinitionExpression(defExp);
-                    map.addLayer(featureLayer);
-                    var layerAdd = map.on('update-end', function(){
-                        console.log("Capa agregada");
-                        loadFetureTablePuerto(featureLayer, name, noResults)
                         layerAdd.remove();
                     })
                 }
@@ -988,6 +899,65 @@ $(".clickableCarretera").on("click", function(){//.clickable genera la tabla par
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
+    //Codigo que genera la tabla del boton para mostrar
+        $(".clickable9").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
+            var clicked = this;
+            $(clicked).toggleClass("clicked");
+            $(".clickable9").each(function(id, el){
+                if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
+            })
+            borrarCapas();
+            if(featureTables.length > 0){
+                featureTables.forEach(function(ft){
+                    ft.destroy();
+                })
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+            }
+            if($(clicked).hasClass("clicked") && lastGeometry){
+                showElem();
+                sourcesClicked = $(clicked).attr("data-sources");
+                var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+
+                var templateSource = $("#featureTable-template").html();
+                var template = Handlebars.compile(templateSource);
+                var outputHTML = template({features: sources});
+                $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+
+                sistemaExpuestoActivo = $(".tabs__item.active").text();
+
+                $(".tabs__item").on("click", function(){
+                    var tab = $(".tabs__item").index(this);
+                    $(".tabs__item").removeClass("active");
+                    $(".panels__item").removeClass("active");
+                    $(this).addClass("active");
+                    var panel = $(".panels__item")[tab];
+                    $(panel).addClass("active");
+                    sistemaExpuestoActivo = $(this).text();
+                });
+
+                $("#downloadFeature").on("click", function(){
+                    var activeFeature = $(".tabs__item.active").attr("data-feature");
+                    createFeatureTableCSV(activeFeature);
+                });
+
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+
+                showElem();
+                sourcesClicked.split("/").forEach(function(source){
+                    mostrarFeaturesDentroCarreteras(lastGeometry, featureLayer_urls[source], source, true);
+                });
+                hideElem();
+            } else {
+                sistemaExpuestoActivo = "";
+                $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
+            }
+        })
+
+
 
     function mostrarFeaturesDentroCarretera(geometry, url, name, visible = false){
     require([
@@ -1089,7 +1059,7 @@ $(".clickableCarretera").on("click", function(){//.clickable genera la tabla par
                     map.addLayer(featureLayer);
                     var layerAdd = map.on('update-end', function(){
                         console.log("Capa agregada");
-                        loadFetureTableCarretera(featureLayer, name, noResults)
+                        //loadFetureTableCarretera(featureLayer, name, noResults)
                         layerAdd.remove();
                     })
                 }
@@ -1097,64 +1067,115 @@ $(".clickableCarretera").on("click", function(){//.clickable genera la tabla par
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar
-    $(".clickable9").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
-        var clicked = this;
-        $(clicked).toggleClass("clicked");
-        $(".clickable9").each(function(id, el){
-            if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
-        })
-        borrarCapas();
-        if(featureTables.length > 0){
-            featureTables.forEach(function(ft){
-                ft.destroy();
-            })
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-        }
-        if($(clicked).hasClass("clicked") && lastGeometry){
-            showElem();
-            sourcesClicked = $(clicked).attr("data-sources");
-            var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
 
-            var templateSource = $("#featureTable-template").html();
-            var template = Handlebars.compile(templateSource);
-            var outputHTML = template({features: sources});
-            $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+function mostrarFeaturesDentroCarreteras(geometry, url, name, visible = false){
+require([
+    "esri/layers/FeatureLayer",
+    "esri/dijit/FeatureTable",
+    "esri/tasks/query",
+    "esri/tasks/QueryTask",
+    "esri/geometry/Circle",
+    "esri/graphic",
+    "esri/InfoTemplate",
+    "esri/symbols/PictureMarkerSymbol",
+    "esri/symbols/SimpleMarkerSymbol",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/symbols/SimpleFillSymbol",
+    "esri/renderers/SimpleRenderer",
+    "esri/config",
+    "esri/Color"
+    ], function(
+        FeatureLayer,
+        FeatureTable,
+        Query,
+        QueryTask,
+        Circle,
+        Graphic,
+        InfoTemplate,
+        PictureMarkerSymbol,
+        SimpleMarkerSymbol,
+        SimpleLineSymbol,
+        SimpleFillSymbol,
+        SimpleRenderer,
+        esriConfig,
+        Color
+    ){
+    var featureLayer = new FeatureLayer(url,{//Es la funcion que hay que modificar con el query correcto para poder obtener solo los campos necesarios.
+        outFields: ["TIPO_VIAL","NOMBRE","ID_RED","COND_PAV","CARRILES","ADMINISTRA","VELOCIDAD","FECHA_ACT"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
+        fieldInfos: [
+          {
+            name: 'FECHA_ACT',
+            alias: 'Feche de Actulización',
+          },
+          {
+            name: 'NOMBRE',
+            alias: 'Nombre',
+          },
+          {
+            name: 'ID_RED',
+            alias: 'Id. Red Vial',
+          },
+          {
+            name: 'COND_PAV',
+            alias: 'Composicion',
+          },
+          {
+            name: 'CARRILES',
+            alias: 'Carriles',
+          },
+          {
+            name: 'ADMINISTRA',
+            alias: 'Administración',
+          },
+          {
+            name: 'VELOCIDAD',
+            alias: 'Velocidad',
+          }
+        ],
+        mode: FeatureLayer.MODE_ONDEMAND,
+        visible: visible,
+        infoTemplate: new InfoTemplate("Feature", "${*}"),
+        id: name
+    });
 
-            sistemaExpuestoActivo = $(".tabs__item.active").text();
-
-            $(".tabs__item").on("click", function(){
-                var tab = $(".tabs__item").index(this);
-                $(".tabs__item").removeClass("active");
-                $(".panels__item").removeClass("active");
-                $(this).addClass("active");
-                var panel = $(".panels__item")[tab];
-                $(panel).addClass("active");
-                sistemaExpuestoActivo = $(this).text();
-            });
-
-            $("#downloadFeature").on("click", function(){
-                var activeFeature = $(".tabs__item.active").attr("data-feature");
-                createFeatureTableCSV(activeFeature);
-            });
-
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-
-            showElem();
-            sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroCarretera(lastGeometry, featureLayer_urls[source], source, true);
-            });
-            hideElem();
-        } else {
-            sistemaExpuestoActivo = "";
-            $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
-        }
+    featureLayer.on("error", function(error){
+        console.log("Ocurrió un error", error);
     })
 
+    featureLayer.on("load", function(){
+        var queryTask = new QueryTask(url);
+        var queryFeature = new Query();
+        queryFeature.geometry = geometry;
+        queryFeature.returnGeometry = false;
+        queryFeature.maxAllowableOffset = 10;
+        var act = "";
+        queryFeature.where = act;
+
+        queryTask.on("error", function(error){
+            alert("Ocurrió un error", error);
+        })
+
+        queryTask.executeForIds(queryFeature,function(results){
+            if(!results){
+                console.log("Sin resultados", name.split(" ").join(""));
+                $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
+                return;
+            } else {
+                var noResults = results.length;
+                var defExp = getQuery(results, featureLayer.objectIdField);
+
+                featureLayer.setDefinitionExpression(defExp);
+                map.addLayer(featureLayer);
+                var layerAdd = map.on('update-end', function(){
+                    console.log("Capa agregada");
+                    loadFetureTableCarretera(featureLayer, name, noResults)
+                    layerAdd.remove();
+                })
+            }
+        });
+    })
+})
+}
 
 
 function loadFetureTableCarretera(featureLayer, name, noItems)//Funcion que se encarga de generar la tabal en blanco que obtemos al selecionar algun icono de lo buscado
@@ -1406,6 +1427,63 @@ $(".clickableAbasto").on("click", function(){//.clickable genera la tabla para a
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
+    //Codigo que genera la tabla del boton para mostrar
+        $(".clickable8").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
+            var clicked = this;
+            $(clicked).toggleClass("clicked");
+            $(".clickable8").each(function(id, el){
+                if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
+            })
+            borrarCapas();
+            if(featureTables.length > 0){
+                featureTables.forEach(function(ft){
+                    ft.destroy();
+                })
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+            }
+            if($(clicked).hasClass("clicked") && lastGeometry){
+                showElem();
+                sourcesClicked = $(clicked).attr("data-sources");
+                var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+
+                var templateSource = $("#featureTable-template").html();
+                var template = Handlebars.compile(templateSource);
+                var outputHTML = template({features: sources});
+                $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+
+                sistemaExpuestoActivo = $(".tabs__item.active").text();
+
+                $(".tabs__item").on("click", function(){
+                    var tab = $(".tabs__item").index(this);
+                    $(".tabs__item").removeClass("active");
+                    $(".panels__item").removeClass("active");
+                    $(this).addClass("active");
+                    var panel = $(".panels__item")[tab];
+                    $(panel).addClass("active");
+                    sistemaExpuestoActivo = $(this).text();
+                });
+
+                $("#downloadFeature").on("click", function(){
+                    var activeFeature = $(".tabs__item.active").attr("data-feature");
+                    createFeatureTableCSV(activeFeature);
+                });
+
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+
+                showElem();
+                sourcesClicked.split("/").forEach(function(source){
+                    mostrarFeaturesDentroAbasto1(lastGeometry, featureLayer_urls[source], source, true);
+                });
+                hideElem();
+            } else {
+                sistemaExpuestoActivo = "";
+                $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
+            }
+        })
 
     function mostrarFeaturesDentroAbasto(geometry, url, name, visible = false){
     require([
@@ -1477,7 +1555,7 @@ $(".clickableAbasto").on("click", function(){//.clickable genera la tabla para a
                     map.addLayer(featureLayer);
                     var layerAdd = map.on('update-end', function(){
                         console.log("Capa agregada");
-                        loadFetureTableAbasto(featureLayer, name, noResults)
+                        //loadFetureTableAbasto(featureLayer, name, noResults)
                         layerAdd.remove();
                     })
                 }
@@ -1485,63 +1563,85 @@ $(".clickableAbasto").on("click", function(){//.clickable genera la tabla para a
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar
-    $(".clickable8").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
-        var clicked = this;
-        $(clicked).toggleClass("clicked");
-        $(".clickable8").each(function(id, el){
-            if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
-        })
-        borrarCapas();
-        if(featureTables.length > 0){
-            featureTables.forEach(function(ft){
-                ft.destroy();
-            })
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-        }
-        if($(clicked).hasClass("clicked") && lastGeometry){
-            showElem();
-            sourcesClicked = $(clicked).attr("data-sources");
-            var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+function mostrarFeaturesDentroAbasto1(geometry, url, name, visible = false){
+require([
+    "esri/layers/FeatureLayer",
+    "esri/dijit/FeatureTable",
+    "esri/tasks/query",
+    "esri/tasks/QueryTask",
+    "esri/geometry/Circle",
+    "esri/graphic",
+    "esri/InfoTemplate",
+    "esri/symbols/PictureMarkerSymbol",
+    "esri/symbols/SimpleMarkerSymbol",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/symbols/SimpleFillSymbol",
+    "esri/renderers/SimpleRenderer",
+    "esri/config",
+    "esri/Color"
+    ], function(
+        FeatureLayer,
+        FeatureTable,
+        Query,
+        QueryTask,
+        Circle,
+        Graphic,
+        InfoTemplate,
+        PictureMarkerSymbol,
+        SimpleMarkerSymbol,
+        SimpleLineSymbol,
+        SimpleFillSymbol,
+        SimpleRenderer,
+        esriConfig,
+        Color
+    ){
+    var featureLayer = new FeatureLayer(url,{//Es la funcion que hay que modificar con el query correcto para poder obtener solo los campos necesarios.
+        outFields: ["*"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
+        mode: FeatureLayer.MODE_ONDEMAND,
+        visible: visible,
+        infoTemplate: new InfoTemplate("Feature", "${*}"),
+        id: name
+    });
 
-            var templateSource = $("#featureTable-template").html();
-            var template = Handlebars.compile(templateSource);
-            var outputHTML = template({features: sources});
-            $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
-
-            sistemaExpuestoActivo = $(".tabs__item.active").text();
-
-            $(".tabs__item").on("click", function(){
-                var tab = $(".tabs__item").index(this);
-                $(".tabs__item").removeClass("active");
-                $(".panels__item").removeClass("active");
-                $(this).addClass("active");
-                var panel = $(".panels__item")[tab];
-                $(panel).addClass("active");
-                sistemaExpuestoActivo = $(this).text();
-            });
-
-            $("#downloadFeature").on("click", function(){
-                var activeFeature = $(".tabs__item.active").attr("data-feature");
-                createFeatureTableCSV(activeFeature);
-            });
-
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-
-            showElem();
-            sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroAbasto(lastGeometry, featureLayer_urls[source], source, true);
-            });
-            hideElem();
-        } else {
-            sistemaExpuestoActivo = "";
-            $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
-        }
+    featureLayer.on("error", function(error){
+        console.log("Ocurrió un error", error);
     })
+
+    featureLayer.on("load", function(){
+        var queryTask = new QueryTask(url);
+        var queryFeature = new Query();
+        queryFeature.geometry = geometry;
+        queryFeature.returnGeometry = false;
+        queryFeature.maxAllowableOffset = 10;
+        var act = "";
+        queryFeature.where = act;
+
+        queryTask.on("error", function(error){
+            alert("Ocurrió un error", error);
+        })
+
+        queryTask.executeForIds(queryFeature,function(results){
+            if(!results){
+                console.log("Sin resultados", name.split(" ").join(""));
+                $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
+                return;
+            } else {
+                var noResults = results.length;
+                var defExp = getQuery(results, featureLayer.objectIdField);
+
+                featureLayer.setDefinitionExpression(defExp);
+                map.addLayer(featureLayer);
+                var layerAdd = map.on('update-end', function(){
+                    console.log("Capa agregada");
+                    loadFetureTableAbasto(featureLayer, name, noResults)
+                    layerAdd.remove();
+                })
+            }
+        });
+    })
+})
+}
+
 
 
 
@@ -1768,6 +1868,65 @@ $(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para 
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
+    //Codigo que genera la tabla del boton para mostrar
+        $(".clickable7").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
+            var clicked = this;
+            $(clicked).toggleClass("clicked");
+            $(".clickable7").each(function(id, el){
+                if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
+            })
+            borrarCapas();
+            if(featureTables.length > 0){
+                featureTables.forEach(function(ft){
+                    ft.destroy();
+                })
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+            }
+            if($(clicked).hasClass("clicked") && lastGeometry){
+                showElem();
+                sourcesClicked = $(clicked).attr("data-sources");
+                var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+
+                var templateSource = $("#featureTable-template").html();
+                var template = Handlebars.compile(templateSource);
+                var outputHTML = template({features: sources});
+                $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+
+                sistemaExpuestoActivo = $(".tabs__item.active").text();
+
+                $(".tabs__item").on("click", function(){
+                    var tab = $(".tabs__item").index(this);
+                    $(".tabs__item").removeClass("active");
+                    $(".panels__item").removeClass("active");
+                    $(this).addClass("active");
+                    var panel = $(".panels__item")[tab];
+                    $(panel).addClass("active");
+                    sistemaExpuestoActivo = $(this).text();
+                });
+
+                $("#downloadFeature").on("click", function(){
+                    var activeFeature = $(".tabs__item.active").attr("data-feature");
+                    createFeatureTableCSV(activeFeature);
+                });
+
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+
+                showElem();
+                sourcesClicked.split("/").forEach(function(source){
+                    mostrarFeaturesDentroDiconsas(lastGeometry, featureLayer_urls[source], source, true);
+                });
+                hideElem();
+            } else {
+                sistemaExpuestoActivo = "";
+                $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
+            }
+        })
+
+
 
     function mostrarFeaturesDentroDiconsa(geometry, url, name, visible = false){
     require([
@@ -1873,7 +2032,7 @@ $(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para 
                     map.addLayer(featureLayer);
                     var layerAdd = map.on('update-end', function(){
                         console.log("Capa agregada");
-                        loadFetureTableDiconsa(featureLayer, name, noResults)
+                        //loadFetureTableDiconsa(featureLayer, name, noResults)
                         layerAdd.remove();
                     })
                 }
@@ -1881,64 +2040,120 @@ $(".clickableDiconsa").on("click", function(){//.clickable genera la tabla para 
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar
-    $(".clickable7").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
-        var clicked = this;
-        $(clicked).toggleClass("clicked");
-        $(".clickable7").each(function(id, el){
-            if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
-        })
-        borrarCapas();
-        if(featureTables.length > 0){
-            featureTables.forEach(function(ft){
-                ft.destroy();
-            })
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-        }
-        if($(clicked).hasClass("clicked") && lastGeometry){
-            showElem();
-            sourcesClicked = $(clicked).attr("data-sources");
-            var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
 
-            var templateSource = $("#featureTable-template").html();
-            var template = Handlebars.compile(templateSource);
-            var outputHTML = template({features: sources});
-            $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
 
-            sistemaExpuestoActivo = $(".tabs__item.active").text();
+function mostrarFeaturesDentroDiconsas(geometry, url, name, visible = false){
+require([
+    "esri/layers/FeatureLayer",
+    "esri/dijit/FeatureTable",
+    "esri/tasks/query",
+    "esri/tasks/QueryTask",
+    "esri/geometry/Circle",
+    "esri/graphic",
+    "esri/InfoTemplate",
+    "esri/symbols/PictureMarkerSymbol",
+    "esri/symbols/SimpleMarkerSymbol",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/symbols/SimpleFillSymbol",
+    "esri/renderers/SimpleRenderer",
+    "esri/config",
+    "esri/Color"
+    ], function(
+        FeatureLayer,
+        FeatureTable,
+        Query,
+        QueryTask,
+        Circle,
+        Graphic,
+        InfoTemplate,
+        PictureMarkerSymbol,
+        SimpleMarkerSymbol,
+        SimpleLineSymbol,
+        SimpleFillSymbol,
+        SimpleRenderer,
+        esriConfig,
+        Color
+    ){
+    var featureLayer = new FeatureLayer(url,{//Es la funcion que hay que modificar con el query correcto para poder obtener solo los campos necesarios.
+        outFields: ["ESTADO","MUNICIPIO","LOCALIDAD","DIRECCION","NO_TIENDA_","CVE_INEGI","LONG_GDEC","LAT_GDEC"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
+        fieldInfos: [
+          {
+            name: 'ESTADO',
+            alias: 'Estado',
+          },
+          {
+            name: 'MUNICIPIO',
+            alias: 'Municipio',
+          },
+          {
+            name: 'LOCALIDAD',
+            alias: 'Localidad',
+          },
+          {
+            name: 'DIRECCION',
+            alias: 'Direccion'
+          },
+          {
+            name: 'NO_TIENDA_',
+            alias: 'No. Tienda'
+          },
+          {
+            name: 'CVE_INEGI',
+            alias: 'Clave Inegi'
+          },
+          {
+            name: 'LONG_GDEC',
+            alias: 'Longitud'
+          },
+          {
+            name: 'LAT_GDEC',
+            alias: 'Latitud'
+          }
+        ],
+        mode: FeatureLayer.MODE_ONDEMAND,
+        visible: visible,
+        infoTemplate: new InfoTemplate("Feature", "${*}"),
+        id: name
+    });
 
-            $(".tabs__item").on("click", function(){
-                var tab = $(".tabs__item").index(this);
-                $(".tabs__item").removeClass("active");
-                $(".panels__item").removeClass("active");
-                $(this).addClass("active");
-                var panel = $(".panels__item")[tab];
-                $(panel).addClass("active");
-                sistemaExpuestoActivo = $(this).text();
-            });
-
-            $("#downloadFeature").on("click", function(){
-                var activeFeature = $(".tabs__item.active").attr("data-feature");
-                createFeatureTableCSV(activeFeature);
-            });
-
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-
-            showElem();
-            sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroDiconsa(lastGeometry, featureLayer_urls[source], source, true);
-            });
-            hideElem();
-        } else {
-            sistemaExpuestoActivo = "";
-            $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
-        }
+    featureLayer.on("error", function(error){
+        console.log("Ocurrió un error", error);
     })
 
+    featureLayer.on("load", function(){
+        var queryTask = new QueryTask(url);
+        var queryFeature = new Query();
+        queryFeature.geometry = geometry;
+        queryFeature.returnGeometry = false;
+        queryFeature.maxAllowableOffset = 10;
+        var act = "";
+        queryFeature.where = act;
+
+        queryTask.on("error", function(error){
+            alert("Ocurrió un error", error);
+        })
+
+        queryTask.executeForIds(queryFeature,function(results){
+            if(!results){
+                console.log("Sin resultados", name.split(" ").join(""));
+                $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
+                return;
+            } else {
+                var noResults = results.length;
+                var defExp = getQuery(results, featureLayer.objectIdField);
+
+                featureLayer.setDefinitionExpression(defExp);
+                map.addLayer(featureLayer);
+                var layerAdd = map.on('update-end', function(){
+                    console.log("Capa agregada");
+                    loadFetureTableDiconsa(featureLayer, name, noResults)
+                    layerAdd.remove();
+                })
+            }
+        });
+    })
+})
+}
 
 
 function loadFetureTableDiconsa(featureLayer, name, noItems)//Funcion que se encarga de generar la tabal en blanco que obtemos al selecionar algun icono de lo buscado
@@ -2151,6 +2366,64 @@ $(".clickableBanco").on("click", function(){//.clickable genera la tabla para ap
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
+    //Codigo que genera la tabla del boton para mostrar
+        $(".clickable6").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
+            var clicked = this;
+            $(clicked).toggleClass("clicked");
+            $(".clickable6").each(function(id, el){
+                if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
+            })
+            borrarCapas();
+            if(featureTables.length > 0){
+                featureTables.forEach(function(ft){
+                    ft.destroy();
+                })
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+            }
+            if($(clicked).hasClass("clicked") && lastGeometry){
+                showElem();
+                sourcesClicked = $(clicked).attr("data-sources");
+                var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+
+                var templateSource = $("#featureTable-template").html();
+                var template = Handlebars.compile(templateSource);
+                var outputHTML = template({features: sources});
+                $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+
+                sistemaExpuestoActivo = $(".tabs__item.active").text();
+
+                $(".tabs__item").on("click", function(){
+                    var tab = $(".tabs__item").index(this);
+                    $(".tabs__item").removeClass("active");
+                    $(".panels__item").removeClass("active");
+                    $(this).addClass("active");
+                    var panel = $(".panels__item")[tab];
+                    $(panel).addClass("active");
+                    sistemaExpuestoActivo = $(this).text();
+                });
+
+                $("#downloadFeature").on("click", function(){
+                    var activeFeature = $(".tabs__item.active").attr("data-feature");
+                    createFeatureTableCSV(activeFeature);
+                });
+
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+
+                showElem();
+                sourcesClicked.split("/").forEach(function(source){
+                    mostrarFeaturesDentroBanco1(lastGeometry, featureLayer_urls[source], source, true);
+                });
+                hideElem();
+            } else {
+                sistemaExpuestoActivo = "";
+                $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
+            }
+        })
+
 
     function mostrarFeaturesDentroBanco(geometry, url, name, visible = false){
     require([
@@ -2266,7 +2539,7 @@ $(".clickableBanco").on("click", function(){//.clickable genera la tabla para ap
                     map.addLayer(featureLayer);
                     var layerAdd = map.on('update-end', function(){
                         console.log("Capa agregada");
-                        loadFetureTableBanco(featureLayer, name, noResults)
+                        //loadFetureTableBanco(featureLayer, name, noResults)
                         layerAdd.remove();
                     })
                 }
@@ -2274,63 +2547,128 @@ $(".clickableBanco").on("click", function(){//.clickable genera la tabla para ap
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar
-    $(".clickable6").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
-        var clicked = this;
-        $(clicked).toggleClass("clicked");
-        $(".clickable6").each(function(id, el){
-            if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
-        })
-        borrarCapas();
-        if(featureTables.length > 0){
-            featureTables.forEach(function(ft){
-                ft.destroy();
-            })
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-        }
-        if($(clicked).hasClass("clicked") && lastGeometry){
-            showElem();
-            sourcesClicked = $(clicked).attr("data-sources");
-            var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+function mostrarFeaturesDentroBanco1(geometry, url, name, visible = false){
+require([
+    "esri/layers/FeatureLayer",
+    "esri/dijit/FeatureTable",
+    "esri/tasks/query",
+    "esri/tasks/QueryTask",
+    "esri/geometry/Circle",
+    "esri/graphic",
+    "esri/InfoTemplate",
+    "esri/symbols/PictureMarkerSymbol",
+    "esri/symbols/SimpleMarkerSymbol",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/symbols/SimpleFillSymbol",
+    "esri/renderers/SimpleRenderer",
+    "esri/config",
+    "esri/Color"
+    ], function(
+        FeatureLayer,
+        FeatureTable,
+        Query,
+        QueryTask,
+        Circle,
+        Graphic,
+        InfoTemplate,
+        PictureMarkerSymbol,
+        SimpleMarkerSymbol,
+        SimpleLineSymbol,
+        SimpleFillSymbol,
+        SimpleRenderer,
+        esriConfig,
+        Color
+    ){
+    var featureLayer = new FeatureLayer(url,{//Es la funcion que hay que modificar con el query correcto para poder obtener solo los campos necesarios.
+        outFields: ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","COD_POSTAL","LATITUD","LONGITUD"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
+        fieldInfos: [
+          {
+            name: 'ENTIDAD',
+            alias: 'Estado',
+          },
+          {
+            name: 'MUNICIPIO',
+            alias: 'Municipio',
+          },
+          {
+            name: 'LOCALIDAD',
+            alias: 'Localidad',
+          },
+          {
+            name: 'NOM_ESTAB',
+            alias: 'Nombre'
+          },
+          {
+            name: 'COD_POSTAL',
+            alias: 'C.P'
+          },
+          {
+            name: 'LATITUD',
+            alias: 'Latitud'
+          },
+          {
+            name: 'LONGITUD',
+            alias: 'Longitud'
+          }
+        ],
+        mode: FeatureLayer.MODE_ONDEMAND,
+        visible: visible,
+        infoTemplate: new InfoTemplate("Feature", "${*}"),
+        id: name
+    });
 
-            var templateSource = $("#featureTable-template").html();
-            var template = Handlebars.compile(templateSource);
-            var outputHTML = template({features: sources});
-            $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
-
-            sistemaExpuestoActivo = $(".tabs__item.active").text();
-
-            $(".tabs__item").on("click", function(){
-                var tab = $(".tabs__item").index(this);
-                $(".tabs__item").removeClass("active");
-                $(".panels__item").removeClass("active");
-                $(this).addClass("active");
-                var panel = $(".panels__item")[tab];
-                $(panel).addClass("active");
-                sistemaExpuestoActivo = $(this).text();
-            });
-
-            $("#downloadFeature").on("click", function(){
-                var activeFeature = $(".tabs__item.active").attr("data-feature");
-                createFeatureTableCSV(activeFeature);
-            });
-
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-
-            showElem();
-            sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroBanco(lastGeometry, featureLayer_urls[source], source, true);
-            });
-            hideElem();
-        } else {
-            sistemaExpuestoActivo = "";
-            $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
-        }
+    featureLayer.on("error", function(error){
+        console.log("Ocurrió un error", error);
     })
+
+    featureLayer.on("load", function(){
+        var queryTask = new QueryTask(url);
+        var queryFeature = new Query();
+        queryFeature.geometry = geometry;
+        queryFeature.returnGeometry = false;
+        queryFeature.maxAllowableOffset = 10;
+        var act = "";
+        switch(name){
+            case "Bancos":
+                act = "CODIGO_ACT = '521110' OR CODIGO_ACT = '522110'"
+            break;
+            case "Hoteles":
+                act = "CODIGO_ACT = '721111' OR CODIGO_ACT = '721112' OR CODIGO_ACT = '721113' OR CODIGO_ACT = '721190' OR CODIGO_ACT = '721210' OR CODIGO_ACT = '721311' OR CODIGO_ACT = '721312'"
+            break;
+            case "Gasolineras":
+                act = "CODIGO_ACT = '468411'"
+            break;
+            case "Supermercados":
+                act = "CODIGO_ACT = '462111' OR CODIGO_ACT = '462112' OR CODIGO_ACT = '462210'"
+            break;
+        }
+        queryFeature.where = act;
+
+        queryTask.on("error", function(error){
+            alert("Ocurrió un error", error);
+        })
+
+        queryTask.executeForIds(queryFeature,function(results){
+            if(!results){
+                console.log("Sin resultados", name.split(" ").join(""));
+                $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
+                return;
+            } else {
+                var noResults = results.length;
+                var defExp = getQuery(results, featureLayer.objectIdField);
+
+                featureLayer.setDefinitionExpression(defExp);
+                map.addLayer(featureLayer);
+                var layerAdd = map.on('update-end', function(){
+                    console.log("Capa agregada");
+                    loadFetureTableBanco(featureLayer, name, noResults)
+                    layerAdd.remove();
+                })
+            }
+        });
+    })
+})
+}
 
 
 
@@ -2536,6 +2874,64 @@ $(".clickableGas").on("click", function(){//.clickable genera la tabla para apar
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
+    //Codigo que genera la tabla del boton para mostrar
+        $(".clickable5").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
+            var clicked = this;
+            $(clicked).toggleClass("clicked");
+            $(".clickable5").each(function(id, el){
+                if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
+            })
+            borrarCapas();
+            if(featureTables.length > 0){
+                featureTables.forEach(function(ft){
+                    ft.destroy();
+                })
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+            }
+            if($(clicked).hasClass("clicked") && lastGeometry){
+                showElem();
+                sourcesClicked = $(clicked).attr("data-sources");
+                var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+
+                var templateSource = $("#featureTable-template").html();
+                var template = Handlebars.compile(templateSource);
+                var outputHTML = template({features: sources});
+                $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+
+                sistemaExpuestoActivo = $(".tabs__item.active").text();
+
+                $(".tabs__item").on("click", function(){
+                    var tab = $(".tabs__item").index(this);
+                    $(".tabs__item").removeClass("active");
+                    $(".panels__item").removeClass("active");
+                    $(this).addClass("active");
+                    var panel = $(".panels__item")[tab];
+                    $(panel).addClass("active");
+                    sistemaExpuestoActivo = $(this).text();
+                });
+
+                $("#downloadFeature").on("click", function(){
+                    var activeFeature = $(".tabs__item.active").attr("data-feature");
+                    createFeatureTableCSV(activeFeature);
+                });
+
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+
+                showElem();
+                sourcesClicked.split("/").forEach(function(source){
+                    mostrarFeaturesDentroGas1(lastGeometry, featureLayer_urls[source], source, true);
+                });
+                hideElem();
+            } else {
+                sistemaExpuestoActivo = "";
+                $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
+            }
+        })
+
 
     function mostrarFeaturesDentroGas(geometry, url, name, visible = false){
     require([
@@ -2664,7 +3060,7 @@ $(".clickableGas").on("click", function(){//.clickable genera la tabla para apar
                     map.addLayer(featureLayer);
                     var layerAdd = map.on('update-end', function(){
                         console.log("Capa agregada");
-                        loadFetureTableGas(featureLayer, name, noResults)
+                        //loadFetureTableGas(featureLayer, name, noResults)
                         layerAdd.remove();
                     })
                 }
@@ -2672,63 +3068,141 @@ $(".clickableGas").on("click", function(){//.clickable genera la tabla para apar
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar
-    $(".clickable5").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
-        var clicked = this;
-        $(clicked).toggleClass("clicked");
-        $(".clickable5").each(function(id, el){
-            if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
-        })
-        borrarCapas();
-        if(featureTables.length > 0){
-            featureTables.forEach(function(ft){
-                ft.destroy();
-            })
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-        }
-        if($(clicked).hasClass("clicked") && lastGeometry){
-            showElem();
-            sourcesClicked = $(clicked).attr("data-sources");
-            var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+function mostrarFeaturesDentroGas1(geometry, url, name, visible = false){
+require([
+    "esri/layers/FeatureLayer",
+    "esri/dijit/FeatureTable",
+    "esri/tasks/query",
+    "esri/tasks/QueryTask",
+    "esri/geometry/Circle",
+    "esri/graphic",
+    "esri/InfoTemplate",
+    "esri/symbols/PictureMarkerSymbol",
+    "esri/symbols/SimpleMarkerSymbol",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/symbols/SimpleFillSymbol",
+    "esri/renderers/SimpleRenderer",
+    "esri/config",
+    "esri/Color"
+    ], function(
+        FeatureLayer,
+        FeatureTable,
+        Query,
+        QueryTask,
+        Circle,
+        Graphic,
+        InfoTemplate,
+        PictureMarkerSymbol,
+        SimpleMarkerSymbol,
+        SimpleLineSymbol,
+        SimpleFillSymbol,
+        SimpleRenderer,
+        esriConfig,
+        Color
+    ){
+    var featureLayer = new FeatureLayer(url,{//Es la funcion que hay que modificar con el query correcto para poder obtener solo los campos necesarios.
+        outFields: ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","NOM_VIAL","NUMERO_EXT","COD_POSTAL","TELEFONO","LATITUD","LONGITUD"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
+        fieldInfos: [
+          {
+            name: 'ENTIDAD',
+            alias: 'Estado',
+          },
+          {
+            name: 'MUNICIPIO',
+            alias: 'Municipio',
+          },
+          {
+            name: 'LOCALIDAD',
+            alias: 'Localidad',
+          },
+          {
+            name: 'NOM_ESTAB',
+            alias: 'Nombre'
+          },
+          {
+            name: 'NOM_VIAL',
+            alias: 'Direccion'
 
-            var templateSource = $("#featureTable-template").html();
-            var template = Handlebars.compile(templateSource);
-            var outputHTML = template({features: sources});
-            $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+          },
+          {
+            name: 'NUMERO_EXT',
+            alias: 'Num.Ext.'
+          },
+          {
+            name: 'COD_POSTAL',
+            alias: 'C.P'
+          },
+          {
+            name: 'TELEFONO',
+            alias: 'Telefono',
+          },
+          {
+            name: 'LATITUD',
+            alias: 'Latitud'
+          },
+          {
+            name: 'LONGITUD',
+            alias: 'Longitud'
+          }
+        ],
+        mode: FeatureLayer.MODE_ONDEMAND,
+        visible: visible,
+        infoTemplate: new InfoTemplate("Feature", "${*}"),
+        id: name
+    });
 
-            sistemaExpuestoActivo = $(".tabs__item.active").text();
-
-            $(".tabs__item").on("click", function(){
-                var tab = $(".tabs__item").index(this);
-                $(".tabs__item").removeClass("active");
-                $(".panels__item").removeClass("active");
-                $(this).addClass("active");
-                var panel = $(".panels__item")[tab];
-                $(panel).addClass("active");
-                sistemaExpuestoActivo = $(this).text();
-            });
-
-            $("#downloadFeature").on("click", function(){
-                var activeFeature = $(".tabs__item.active").attr("data-feature");
-                createFeatureTableCSV(activeFeature);
-            });
-
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-
-            showElem();
-            sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroGas(lastGeometry, featureLayer_urls[source], source, true);
-            });
-            hideElem();
-        } else {
-            sistemaExpuestoActivo = "";
-            $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
-        }
+    featureLayer.on("error", function(error){
+        console.log("Ocurrió un error", error);
     })
+
+    featureLayer.on("load", function(){
+        var queryTask = new QueryTask(url);
+        var queryFeature = new Query();
+        queryFeature.geometry = geometry;
+        queryFeature.returnGeometry = false;
+        queryFeature.maxAllowableOffset = 10;
+        var act = "";
+        switch(name){
+            case "Bancos":
+                act = "CODIGO_ACT = '521110' OR CODIGO_ACT = '522110'"
+            break;
+            case "Hoteles":
+                act = "CODIGO_ACT = '721111' OR CODIGO_ACT = '721112' OR CODIGO_ACT = '721113' OR CODIGO_ACT = '721190' OR CODIGO_ACT = '721210' OR CODIGO_ACT = '721311' OR CODIGO_ACT = '721312'"
+            break;
+            case "Gasolineras":
+                act = "CODIGO_ACT = '468411'"
+            break;
+            case "Supermercados":
+                act = "CODIGO_ACT = '462111' OR CODIGO_ACT = '462112' OR CODIGO_ACT = '462210'"
+            break;
+        }
+        queryFeature.where = act;
+
+        queryTask.on("error", function(error){
+            alert("Ocurrió un error", error);
+        })
+
+        queryTask.executeForIds(queryFeature,function(results){
+            if(!results){
+                console.log("Sin resultados", name.split(" ").join(""));
+                $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
+                return;
+            } else {
+                var noResults = results.length;
+                var defExp = getQuery(results, featureLayer.objectIdField);
+
+                featureLayer.setDefinitionExpression(defExp);
+                map.addLayer(featureLayer);
+                var layerAdd = map.on('update-end', function(){
+                    console.log("Capa agregada");
+                    loadFetureTableGas(featureLayer, name, noResults)
+                    layerAdd.remove();
+                })
+            }
+        });
+    })
+})
+}
 
 
 
@@ -2950,6 +3424,67 @@ $(".clickableSuper").on("click", function(){//.clickable genera la tabla para ap
         }
     })
 
+    //Codigo que genera la tabla del boton para mostrar
+        $(".clickable4").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
+            var clicked = this;
+            $(clicked).toggleClass("clicked");
+            $(".clickable4").each(function(id, el){
+                if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
+            })
+            borrarCapas();
+            if(featureTables.length > 0){
+                featureTables.forEach(function(ft){
+                    ft.destroy();
+                })
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+            }
+            if($(clicked).hasClass("clicked") && lastGeometry){
+                showElem();
+                sourcesClicked = $(clicked).attr("data-sources");
+                var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+
+                var templateSource = $("#featureTable-template").html();
+                var template = Handlebars.compile(templateSource);
+                var outputHTML = template({features: sources});
+                $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+
+                sistemaExpuestoActivo = $(".tabs__item.active").text();
+
+                $(".tabs__item").on("click", function(){
+                    var tab = $(".tabs__item").index(this);
+                    $(".tabs__item").removeClass("active");
+                    $(".panels__item").removeClass("active");
+                    $(this).addClass("active");
+                    var panel = $(".panels__item")[tab];
+                    $(panel).addClass("active");
+                    sistemaExpuestoActivo = $(this).text();
+                });
+
+                $("#downloadFeature").on("click", function(){
+                    var activeFeature = $(".tabs__item.active").attr("data-feature");
+                    createFeatureTableCSV(activeFeature);
+                });
+
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+
+                showElem();
+                sourcesClicked.split("/").forEach(function(source){
+                    mostrarFeaturesDentroSuper1(lastGeometry, featureLayer_urls[source], source, true);
+                });
+                hideElem();
+            } else {
+                sistemaExpuestoActivo = "";
+                $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
+            }
+        })
+
+
+
+
     function mostrarFeaturesDentroSuper(geometry, url, name, visible = false){
     require([
         "esri/layers/FeatureLayer",
@@ -3077,7 +3612,7 @@ $(".clickableSuper").on("click", function(){//.clickable genera la tabla para ap
                     map.addLayer(featureLayer);
                     var layerAdd = map.on('update-end', function(){
                         console.log("Capa agregada");
-                        loadFetureTableSuper(featureLayer, name, noResults)
+                        //loadFetureTableSuper(featureLayer, name, noResults)
                         layerAdd.remove();
                     })
                 }
@@ -3085,66 +3620,141 @@ $(".clickableSuper").on("click", function(){//.clickable genera la tabla para ap
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar
-    $(".clickable4").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
-        var clicked = this;
-        $(clicked).toggleClass("clicked");
-        $(".clickable4").each(function(id, el){
-            if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
-        })
-        borrarCapas();
-        if(featureTables.length > 0){
-            featureTables.forEach(function(ft){
-                ft.destroy();
-            })
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-        }
-        if($(clicked).hasClass("clicked") && lastGeometry){
-            showElem();
-            sourcesClicked = $(clicked).attr("data-sources");
-            var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+function mostrarFeaturesDentroSuper1(geometry, url, name, visible = false){
+require([
+    "esri/layers/FeatureLayer",
+    "esri/dijit/FeatureTable",
+    "esri/tasks/query",
+    "esri/tasks/QueryTask",
+    "esri/geometry/Circle",
+    "esri/graphic",
+    "esri/InfoTemplate",
+    "esri/symbols/PictureMarkerSymbol",
+    "esri/symbols/SimpleMarkerSymbol",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/symbols/SimpleFillSymbol",
+    "esri/renderers/SimpleRenderer",
+    "esri/config",
+    "esri/Color"
+    ], function(
+        FeatureLayer,
+        FeatureTable,
+        Query,
+        QueryTask,
+        Circle,
+        Graphic,
+        InfoTemplate,
+        PictureMarkerSymbol,
+        SimpleMarkerSymbol,
+        SimpleLineSymbol,
+        SimpleFillSymbol,
+        SimpleRenderer,
+        esriConfig,
+        Color
+    ){
+    var featureLayer = new FeatureLayer(url,{//Es la funcion que hay que modificar con el query correcto para poder obtener solo los campos necesarios.
+        outFields: ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","NOM_VIAL","NUMERO_EXT","COD_POSTAL","TELEFONO","LATITUD","LONGITUD"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
+        fieldInfos: [
+          {
+            name: 'ENTIDAD',
+            alias: 'Estado',
+          },
+          {
+            name: 'MUNICIPIO',
+            alias: 'Municipio',
+          },
+          {
+            name: 'LOCALIDAD',
+            alias: 'Localidad',
+          },
+          {
+            name: 'NOM_ESTAB',
+            alias: 'Nombre'
+          },
+          {
+            name: 'NOM_VIAL',
+            alias: 'Direccion'
 
-            var templateSource = $("#featureTable-template").html();
-            var template = Handlebars.compile(templateSource);
-            var outputHTML = template({features: sources});
-            $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+          },
+          {
+            name: 'NUMERO_EXT',
+            alias: 'Num.Ext.'
+          },
+          {
+            name: 'COD_POSTAL',
+            alias: 'C.P'
+          },
+          {
+            name: 'TELEFONO',
+            alias: 'Telefono',
+          },
+          {
+            name: 'LATITUD',
+            alias: 'Latitud'
+          },
+          {
+            name: 'LONGITUD',
+            alias: 'Longitud'
+          }
+        ],
+        mode: FeatureLayer.MODE_ONDEMAND,
+        visible: visible,
+        infoTemplate: new InfoTemplate("Feature", "${*}"),
+        id: name
+    });
 
-            sistemaExpuestoActivo = $(".tabs__item.active").text();
-
-            $(".tabs__item").on("click", function(){
-                var tab = $(".tabs__item").index(this);
-                $(".tabs__item").removeClass("active");
-                $(".panels__item").removeClass("active");
-                $(this).addClass("active");
-                var panel = $(".panels__item")[tab];
-                $(panel).addClass("active");
-                sistemaExpuestoActivo = $(this).text();
-            });
-
-            $("#downloadFeature").on("click", function(){
-                var activeFeature = $(".tabs__item.active").attr("data-feature");
-                createFeatureTableCSV(activeFeature);
-            });
-
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-
-            showElem();
-            sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroSuper(lastGeometry, featureLayer_urls[source], source, true);
-            });
-            hideElem();
-        } else {
-            sistemaExpuestoActivo = "";
-            $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
-        }
+    featureLayer.on("error", function(error){
+        console.log("Ocurrió un error", error);
     })
 
+    featureLayer.on("load", function(){
+        var queryTask = new QueryTask(url);
+        var queryFeature = new Query();
+        queryFeature.geometry = geometry;
+        queryFeature.returnGeometry = false;
+        queryFeature.maxAllowableOffset = 10;
+        var act = "";
+        switch(name){
+            case "Bancos":
+                act = "CODIGO_ACT = '521110' OR CODIGO_ACT = '522110'"
+            break;
+            case "Hoteles":
+                act = "CODIGO_ACT = '721111' OR CODIGO_ACT = '721112' OR CODIGO_ACT = '721113' OR CODIGO_ACT = '721190' OR CODIGO_ACT = '721210' OR CODIGO_ACT = '721311' OR CODIGO_ACT = '721312'"
+            break;
+            case "Gasolineras":
+                act = "CODIGO_ACT = '468411'"
+            break;
+            case "Supermercados":
+                act = "CODIGO_ACT = '462111' OR CODIGO_ACT = '462112' OR CODIGO_ACT = '462210'"
+            break;
+        }
+        queryFeature.where = act;
 
+        queryTask.on("error", function(error){
+            alert("Ocurrió un error", error);
+        })
 
+        queryTask.executeForIds(queryFeature,function(results){
+            if(!results){
+                console.log("Sin resultados", name.split(" ").join(""));
+                $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
+                return;
+            } else {
+                var noResults = results.length;
+                var defExp = getQuery(results, featureLayer.objectIdField);
+
+                featureLayer.setDefinitionExpression(defExp);
+                map.addLayer(featureLayer);
+                var layerAdd = map.on('update-end', function(){
+                    console.log("Capa agregada");
+                    loadFetureTableSuper(featureLayer, name, noResults)
+                    layerAdd.remove();
+                })
+            }
+        });
+    })
+})
+}
 function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encarga de generar la tabal en blanco que obtemos al selecionar algun icono de lo buscado
 {
     require([
@@ -3362,6 +3972,66 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
             $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
         }
     })
+    //Codigo que genera la tabla del boton para mostrar
+        $(".clickable3").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
+            var clicked = this;
+            $(clicked).toggleClass("clicked");
+            $(".clickable3").each(function(id, el){
+                if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
+            })
+            borrarCapas();
+            if(featureTables.length > 0){
+                featureTables.forEach(function(ft){
+                    ft.destroy();
+                })
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+            }
+            if($(clicked).hasClass("clicked") && lastGeometry){
+                showElem();
+                sourcesClicked = $(clicked).attr("data-sources");
+                var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+
+                var templateSource = $("#featureTable-template").html();
+                var template = Handlebars.compile(templateSource);
+                var outputHTML = template({features: sources});
+                $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+
+                sistemaExpuestoActivo = $(".tabs__item.active").text();
+
+                $(".tabs__item").on("click", function(){
+                    var tab = $(".tabs__item").index(this);
+                    $(".tabs__item").removeClass("active");
+                    $(".panels__item").removeClass("active");
+                    $(this).addClass("active");
+                    var panel = $(".panels__item")[tab];
+                    $(panel).addClass("active");
+                    sistemaExpuestoActivo = $(this).text();
+                });
+
+                $("#downloadFeature").on("click", function(){
+                    var activeFeature = $(".tabs__item.active").attr("data-feature");
+                    createFeatureTableCSV(activeFeature);
+                });
+
+                $(".closeFeatures").on('click', function(event){
+                    $(".clicked").click();
+                });
+
+                showElem();
+                sourcesClicked.split("/").forEach(function(source){
+                    mostrarFeaturesDentroHotel1(lastGeometry, featureLayer_urls[source], source, true);
+                });
+                hideElem();
+            } else {
+                sistemaExpuestoActivo = "";
+                $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
+            }
+        })
+
+
+
 
     function mostrarFeaturesDentroHotel(geometry, url, name, visible = false){
     require([
@@ -3490,7 +4160,7 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
                     map.addLayer(featureLayer);
                     var layerAdd = map.on('update-end', function(){
                         console.log("Capa agregada");
-                        loadFetureTableHotel(featureLayer, name, noResults)
+                        //loadFetureTableHotel(featureLayer, name, noResults)
                         layerAdd.remove();
                     })
                 }
@@ -3498,65 +4168,141 @@ function loadFetureTableSuper(featureLayer, name, noItems)//Funcion que se encar
         })
     })
 }
-//Codigo que genera la tabla del boton para mostrar
-    $(".clickable3").on("click", function(){//.clickable genera la tabla para aparecer en el mapa
-        var clicked = this;
-        $(clicked).toggleClass("clicked");
-        $(".clickable3").each(function(id, el){
-            if($(el).hasClass("clicked") && $(el).attr("id") != $(clicked).attr("id")) $(el).removeClass("clicked");
-        })
-        borrarCapas();
-        if(featureTables.length > 0){
-            featureTables.forEach(function(ft){
-                ft.destroy();
-            })
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-        }
-        if($(clicked).hasClass("clicked") && lastGeometry){
-            showElem();
-            sourcesClicked = $(clicked).attr("data-sources");
-            var sources = sourcesClicked.split("/").map(function(source){ return {name: source, shortName: source.split(" ").join("")} });
+function mostrarFeaturesDentroHotel1(geometry, url, name, visible = false){
+require([
+    "esri/layers/FeatureLayer",
+    "esri/dijit/FeatureTable",
+    "esri/tasks/query",
+    "esri/tasks/QueryTask",
+    "esri/geometry/Circle",
+    "esri/graphic",
+    "esri/InfoTemplate",
+    "esri/symbols/PictureMarkerSymbol",
+    "esri/symbols/SimpleMarkerSymbol",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/symbols/SimpleFillSymbol",
+    "esri/renderers/SimpleRenderer",
+    "esri/config",
+    "esri/Color"
+    ], function(
+        FeatureLayer,
+        FeatureTable,
+        Query,
+        QueryTask,
+        Circle,
+        Graphic,
+        InfoTemplate,
+        PictureMarkerSymbol,
+        SimpleMarkerSymbol,
+        SimpleLineSymbol,
+        SimpleFillSymbol,
+        SimpleRenderer,
+        esriConfig,
+        Color
+    ){
+    var featureLayer = new FeatureLayer(url,{//Es la funcion que hay que modificar con el query correcto para poder obtener solo los campos necesarios.
+        outFields: ["ENTIDAD","MUNICIPIO","LOCALIDAD","NOM_ESTAB","NOM_VIAL","NUMERO_EXT","COD_POSTAL","TELEFONO","LATITUD","LONGITUD"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
+        fieldInfos: [
+          {
+            name: 'ENTIDAD',
+            alias: 'Estado',
+          },
+          {
+            name: 'MUNICIPIO',
+            alias: 'Municipio',
+          },
+          {
+            name: 'LOCALIDAD',
+            alias: 'Localidad',
+          },
+          {
+            name: 'NOM_ESTAB',
+            alias: 'Nombre'
+          },
+          {
+            name: 'NOM_VIAL',
+            alias: 'Direccion'
 
-            var templateSource = $("#featureTable-template").html();
-            var template = Handlebars.compile(templateSource);
-            var outputHTML = template({features: sources});
-            $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+          },
+          {
+            name: 'NUMERO_EXT',
+            alias: 'Num.Ext.'
+          },
+          {
+            name: 'COD_POSTAL',
+            alias: 'C.P'
+          },
+          {
+            name: 'TELEFONO',
+            alias: 'Telefono',
+          },
+          {
+            name: 'LATITUD',
+            alias: 'Latitud'
+          },
+          {
+            name: 'LONGITUD',
+            alias: 'Longitud'
+          }
+        ],
+        mode: FeatureLayer.MODE_ONDEMAND,
+        visible: visible,
+        infoTemplate: new InfoTemplate("Feature", "${*}"),
+        id: name
+    });
 
-            sistemaExpuestoActivo = $(".tabs__item.active").text();
-
-            $(".tabs__item").on("click", function(){
-                var tab = $(".tabs__item").index(this);
-                $(".tabs__item").removeClass("active");
-                $(".panels__item").removeClass("active");
-                $(this).addClass("active");
-                var panel = $(".panels__item")[tab];
-                $(panel).addClass("active");
-                sistemaExpuestoActivo = $(this).text();
-            });
-
-            $("#downloadFeature").on("click", function(){
-                var activeFeature = $(".tabs__item.active").attr("data-feature");
-                createFeatureTableCSV(activeFeature);
-            });
-
-            $(".closeFeatures").on('click', function(event){
-                $(".clicked").click();
-            });
-
-            showElem();
-            sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroHotel(lastGeometry, featureLayer_urls[source], source, true);
-            });
-            hideElem();
-        } else {
-            sistemaExpuestoActivo = "";
-            $("#featureTable").css("display", "none");//Sirve para borrar la tabla q se crea
-        }
+    featureLayer.on("error", function(error){
+        console.log("Ocurrió un error", error);
     })
 
+    featureLayer.on("load", function(){
+        var queryTask = new QueryTask(url);
+        var queryFeature = new Query();
+        queryFeature.geometry = geometry;
+        queryFeature.returnGeometry = false;
+        queryFeature.maxAllowableOffset = 10;
+        var act = "";
+        switch(name){
+            case "Bancos":
+                act = "CODIGO_ACT = '521110' OR CODIGO_ACT = '522110'"
+            break;
+            case "Hoteles":
+                act = "CODIGO_ACT = '721111' OR CODIGO_ACT = '721112' OR CODIGO_ACT = '721113' OR CODIGO_ACT = '721190' OR CODIGO_ACT = '721210' OR CODIGO_ACT = '721311' OR CODIGO_ACT = '721312'"
+            break;
+            case "Gasolineras":
+                act = "CODIGO_ACT = '468411'"
+            break;
+            case "Supermercados":
+                act = "CODIGO_ACT = '462111' OR CODIGO_ACT = '462112' OR CODIGO_ACT = '462210'"
+            break;
+        }
+        queryFeature.where = act;
 
+        queryTask.on("error", function(error){
+            alert("Ocurrió un error", error);
+        })
+
+        queryTask.executeForIds(queryFeature,function(results){
+            if(!results){
+                console.log("Sin resultados", name.split(" ").join(""));
+                $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
+                return;
+            } else {
+                var noResults = results.length;
+                var defExp = getQuery(results, featureLayer.objectIdField);
+
+                featureLayer.setDefinitionExpression(defExp);
+                map.addLayer(featureLayer);
+                var layerAdd = map.on('update-end', function(){
+                    console.log("Capa agregada");
+                    loadFetureTableHotel(featureLayer, name, noResults)
+                    layerAdd.remove();
+                })
+            }
+        });
+    })
+})
+}
 
 function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encarga de generar la tabal en blanco que obtemos al selecionar algun icono de lo buscado
 {
@@ -3809,7 +4555,7 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
             var templateSource = $("#featureTable-template").html();
             var template = Handlebars.compile(templateSource);
             var outputHTML = template({features: sources});
-            //$('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
+            $('#featureTable').html(outputHTML); //Es el constructor de la tabla al seleccionar el icono
 
             sistemaExpuestoActivo = $(".tabs__item.active").text();
 
@@ -3834,7 +4580,7 @@ function loadFetureTableHotel(featureLayer, name, noItems)//Funcion que se encar
 
             showElem();
             sourcesClicked.split("/").forEach(function(source){
-                mostrarFeaturesDentroAeropuerto(lastGeometry, featureLayer_urls[source], source, true);
+                mostrarFeaturesDentroAeropuerto1(lastGeometry, featureLayer_urls[source], source, true);
             });
             hideElem();
         } else {
@@ -3934,6 +4680,95 @@ function mostrarFeaturesDentroAeropuerto(geometry, url, name, visible = false){
                     map.addLayer(featureLayer);
                     var layerAdd = map.on('update-end', function(){
                         console.log("Capa agregada");
+                        //loadFetureTableAero(featureLayer, name, noResults)
+                        layerAdd.remove();
+                    })
+                }
+            });
+        })
+    })
+}
+function mostrarFeaturesDentroAeropuerto1(geometry, url, name, visible = false){
+    require([
+        "esri/layers/FeatureLayer",
+        "esri/dijit/FeatureTable",
+        "esri/tasks/query",
+        "esri/tasks/QueryTask",
+        "esri/geometry/Circle",
+        "esri/graphic",
+        "esri/InfoTemplate",
+        "esri/symbols/PictureMarkerSymbol",
+        "esri/symbols/SimpleMarkerSymbol",
+        "esri/symbols/SimpleLineSymbol",
+        "esri/symbols/SimpleFillSymbol",
+        "esri/renderers/SimpleRenderer",
+        "esri/config",
+        "esri/Color"
+        ], function(
+            FeatureLayer,
+            FeatureTable,
+            Query,
+            QueryTask,
+            Circle,
+            Graphic,
+            InfoTemplate,
+            PictureMarkerSymbol,
+            SimpleMarkerSymbol,
+            SimpleLineSymbol,
+            SimpleFillSymbol,
+            SimpleRenderer,
+            esriConfig,
+            Color
+        ){
+        var featureLayer = new FeatureLayer(url,{//La funcion que modifica la informacion que se muestra al dar click sobre el icono
+            outFields: ["NOMBRE","CLASE","SUBCLASE"],//Esta es el campo donde selecionamos solo ciertas cosas que queremos mostrar
+            fieldInfos: [
+              {
+                name: 'NOMBRE',
+                alias: 'NOMBRE',
+              },
+              {
+                name: 'CLASE',
+                alias: 'CLASE',
+              },
+              {
+                name: 'SUBCLASE',
+                alias: 'SUBCLASE',
+              }
+            ],
+            mode: FeatureLayer.MODE_ONDEMAND,
+            visible: true,
+            infoTemplate: new InfoTemplate("Feature", "${*}"),
+            id: name
+        });
+
+        featureLayer.on("error", function(error){
+            console.log("Ocurrió un error", error);
+        })
+
+        featureLayer.on("load", function(){
+            var queryTask = new QueryTask(url);
+            var queryFeature = new Query();
+            queryFeature.geometry = geometry;
+            queryFeature.returnGeometry = false;
+            queryFeature.maxAllowableOffset = 10;
+            queryTask.on("error", function(error){
+                alert("Ocurrió un error", error);
+            })
+
+            queryTask.executeForIds(queryFeature,function(results){
+                if(!results){
+                    console.log("Sin resultados", name.split(" ").join(""));
+                    $("#panels__item-" + name.split(" ").join("")).text("Sin resultados");
+                    return;
+                } else {
+                    var noResults = results.length;
+                    var defExp = getQuery(results, featureLayer.objectIdField);
+
+                    featureLayer.setDefinitionExpression(defExp);
+                    map.addLayer(featureLayer);
+                    var layerAdd = map.on('update-end', function(){
+                        console.log("Capa agregada");
                         loadFetureTableAero(featureLayer, name, noResults)
                         layerAdd.remove();
                     })
@@ -3942,7 +4777,6 @@ function mostrarFeaturesDentroAeropuerto(geometry, url, name, visible = false){
         })
     })
 }
-
 function loadFetureTableAero(featureLayer, name, noItems)//Funcion que se encarga de generar la tabal en blanco que obtemos al selecionar algun icono de lo buscado
 {
     require([
