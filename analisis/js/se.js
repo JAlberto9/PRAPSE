@@ -487,6 +487,30 @@ function processResultPob(type, url, outFields, idsArray, suma, pobResult = []){
         queryTaskPobArray.push(queryPob);
     }
 }
+//Inicia codigo para el Conteo de Centrales de Abasto
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Termina el conteo para centrales de abasto
+
+
+
+
+
+
+
 
 function sumaPoblacion(){
     var obj;

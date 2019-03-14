@@ -18,7 +18,7 @@
     </tr>
     <div class="Row">
       <div class="container">
-        <form name="ResumenTodosForm" method="post" action="http://infosiap.siap.gob.mx:8080/agricola_siap_gobmx/ResumenDelegacion.do">
+        <form name="ResumenTodosForm" method="post" action="http://infosiap.siap.gob.mx:8080/agricola_siap_gobmx/ResumenDelegacion.do" target="_self">
           <table class="table" align="center">
             <tbody><tr>
               <th colspan="4" style="text-align: center;">

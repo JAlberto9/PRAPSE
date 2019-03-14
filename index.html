@@ -33,6 +33,8 @@
   <!-- <script type="text/javascript" src="http://www.anr.gob.mx/analisis/analisis.js"></script>   -->
   <!-- Modificar el archivo de abajo para obtener el analisis q esta haciendo desde mis computadora -->
   <script type="text/javascript" src="analisis/js/se.js"></script>
+  <!--<script type="text/javascript" src="analisis/js/analisis.js"></script>-->
+
 </head>
 <body class="claro">
  <div id="ContenedorMapa">
@@ -245,16 +247,16 @@
         </div><!--Fin de descarga-->
         <div data-role="collapsible" data-theme="b" data-content-theme="b" data-inset="false" id="reporte_siap" >
           <h4>Cultivos</h4>
-          <a id="analisis2" class="ui-btn ui-bnt-b" href="reportes/siap2.html" target="_blank">Reporte de Cultivos</a>
+          <a id="analisis2" class="ui-btn ui-bnt-b" href="reportes/cultivos.php" target="_blank">Reporte de Cultivos</a>
         </div>
         <div id="tocDiv"></div>
       </div>
     </div>
   </div>
-  <div id="table">
+  <div id="table" >
     <a title="Cerrar" href="#" class="ui-btn ui-btn-inline ui-icon-delete ui-btn-icon-notext close" style="border:none;margin:0"></a>
     <!--<div class="close">Cerrar tabla</div>-->
-    <div id="table-container"></div>
+    <div id="table-container" class="table-responsive"></div>
     <div id="download">
       <a href="#" id="csvPob" style="color:white;">Descargar tabla en CSV</a>
     </div>
@@ -332,7 +334,7 @@
   //Metodo $.Post
     $(function(){
       $('#analisis2').click(function(){
-        $.post('reportes/sesions.php',{
+        $.post('sesions.php',{
           Poblacion: document.getElementById("Pob").innerHTML,
           Municipio: document.getElementById("Mun").innerHTML,
           Hoteles: document.getElementById("Hot").innerHTML,
