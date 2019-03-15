@@ -130,14 +130,14 @@
                           <th colspan="4" style="text-align: center;">
                             <input type="submit" value="Consultar" class="btn btn-primary">
                             <input type="hidden" name="consultar" value="si">
-                            <button class="btn btn-default" type="button" onclick="javascript:imprimir('divResultados');">
+                            <!--<button class="btn btn-default" type="button" onclick="javascript:imprimir('divResultados');">
                               <span class="glyphicon glyphicon-print" aria-hidden="true"></span>
                               Imprimir
                             </button>
                             <button class="btn btn-default" type="button" onclick="javascript:excel();">
                               <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
                               Descargar
-                            </button>
+                            </button>-->
                           </th>
                         </tr>
                       </tbody></table>
